@@ -3,80 +3,152 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GenoInsight - Multi-Patient Platform</title>
+    <title>GenoInsight - Clinical Genomics Platform</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 min-h-screen">
     <div class="container mx-auto p-6">
         <!-- Header -->
         <header class="mb-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg shadow-xl p-6 text-white">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-4xl font-bold">GenoInsight Clinical Platform</h1>
-                    <p class="text-lg mt-2 opacity-90">AI-Powered Precision Medicine at Scale</p>
-                </div>
-                <div class="text-right">
-                    <p class="text-sm opacity-90">Laboratory: <span class="font-bold">Northeastern Genomics Center</span></p>
-                    <p class="text-sm opacity-90">Date: <span class="font-bold">January 27, 2026</span></p>
-                </div>
-            </div>
+            <h1 class="text-4xl font-bold">GenoInsight Clinical Platform</h1>
+            <p class="text-lg mt-2 opacity-90">AI-Powered Precision Medicine</p>
         </header>
 
-        <!-- Control Panel -->
+        <!-- Analysis Options -->
         <div class="bg-white rounded-lg shadow-xl p-6 mb-8">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h2 class="text-2xl font-bold text-gray-800">Batch Analysis Control</h2>
-                    <p class="text-gray-600 mt-1">Process multiple patient samples simultaneously</p>
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Select Analysis Type</h2>
+            
+            <div class="grid grid-cols-3 gap-4 mb-6">
+                <button onclick="showMode('upload')" id="btn-upload"
+                        class="p-6 rounded-lg border-2 hover:border-blue-500 hover:bg-blue-50 transition-all">
+                    <div class="text-4xl mb-2">📤</div>
+                    <h3 class="font-bold">Upload New VCF</h3>
+                    <p class="text-xs text-gray-600 mt-1">Analyze new patient data</p>
+                </button>
+                
+                <button onclick="showMode('single')" id="btn-single"
+                        class="p-6 rounded-lg border-2 hover:border-green-500 hover:bg-green-50 transition-all">
+                    <div class="text-4xl mb-2">👤</div>
+                    <h3 class="font-bold">Single Patient</h3>
+                    <p class="text-xs text-gray-600 mt-1">Analyze one from database</p>
+                </button>
+                
+                <button onclick="showMode('batch')" id="btn-batch"
+                        class="p-6 rounded-lg border-2 hover:border-purple-500 hover:bg-purple-50 transition-all">
+                    <div class="text-4xl mb-2">👥</div>
+                    <h3 class="font-bold">Batch Analysis</h3>
+                    <p class="text-xs text-gray-600 mt-1">Process multiple patients</p>
+                </button>
+            </div>
+
+            <!-- Upload Mode -->
+            <div id="upload-mode" class="hidden">
+                <div class="bg-blue-50 border-2 border-blue-300 rounded-lg p-6">
+                    <h3 class="font-bold text-blue-900 mb-3">📤 Upload Patient VCF File</h3>
+                    <input type="file" accept=".vcf" id="vcf-upload" 
+                           class="w-full p-3 border-2 border-gray-300 rounded-lg mb-3">
+                    <p class="text-xs text-blue-700 mb-3">Accepts standard VCF format (max 16MB)</p>
+                    
+                    <div class="mb-3">
+                        <label class="block text-sm font-semibold mb-2">Patient Information (Optional):</label>
+                        <input type="text" id="upload-patient-name" placeholder="Patient Name" 
+                               class="w-full p-2 border rounded mb-2">
+                        <input type="text" id="upload-patient-id" placeholder="Patient ID" 
+                               class="w-full p-2 border rounded mb-2">
+                    </div>
+                    
+                    <button onclick="analyzeUploadedVCF()" 
+                            class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-semibold">
+                        🧬 Analyze Uploaded VCF
+                    </button>
+                    
+                    <div class="mt-4 pt-4 border-t">
+                        <p class="text-sm font-semibold text-gray-700 mb-2">📥 Download Sample VCF for Testing:</p>
+                        <button onclick="downloadSampleVCF()" 
+                                class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm">
+                            Download sample_patient.vcf
+                        </button>
+                        <p class="text-xs text-gray-600 mt-1">Use this to test the upload functionality</p>
+                    </div>
                 </div>
-                <div class="flex gap-4">
-                    <button onclick="analyzePatients(3)" 
-                            class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-all font-semibold shadow-lg">
-                        🧬 3 Patients
-                    </button>
-                    <button onclick="analyzePatients(5)" 
-                            class="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-all font-semibold shadow-lg">
-                        🧬 5 Patients
-                    </button>
-                    <button onclick="analyzePatients(10)" 
-                            class="bg-gradient-to-r from-pink-600 to-red-600 text-white px-6 py-3 rounded-lg hover:from-pink-700 hover:to-red-700 transition-all font-bold shadow-lg">
-                        🚀 10 Patients
+            </div>
+
+            <!-- Single Patient Mode -->
+            <div id="single-mode" class="hidden">
+                <div class="bg-green-50 border-2 border-green-300 rounded-lg p-6">
+                    <h3 class="font-bold text-green-900 mb-3">👤 Select Patient from Database</h3>
+                    <select id="patient-select" class="w-full p-3 border-2 rounded-lg mb-3">
+                        <option value="">-- Choose a patient --</option>
+                    </select>
+                    <button onclick="analyzeSinglePatient()" 
+                            class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 font-semibold">
+                        🧬 Analyze Selected Patient
                     </button>
                 </div>
             </div>
-            <div id="loading" class="hidden mt-4">
-                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
-                    <p class="text-blue-800 font-semibold animate-pulse">⚙️ Processing genomic data for <span id="patient-count"></span> patients...</p>
+
+            <!-- Batch Mode -->
+            <div id="batch-mode" class="hidden">
+                <div class="bg-purple-50 border-2 border-purple-300 rounded-lg p-6">
+                    <h3 class="font-bold text-purple-900 mb-3">👥 Select Patients for Batch Analysis</h3>
+                    <div id="patient-checkboxes" class="grid grid-cols-2 gap-3 max-h-64 overflow-y-auto mb-4"></div>
+                    <div class="flex gap-3">
+                        <button onclick="selectAll()" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
+                            ✓ Select All
+                        </button>
+                        <button onclick="clearAll()" class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">
+                            ✗ Clear All
+                        </button>
+                        <button onclick="analyzeBatchPatients()" 
+                                class="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 font-semibold flex-1">
+                            🚀 Analyze Selected Patients
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Platform Statistics -->
-        <div id="platform-stats" class="hidden mb-8">
-            <div class="grid grid-cols-4 gap-6">
-                <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-lg shadow-xl">
-                    <p class="text-sm font-semibold opacity-90">PATIENTS ANALYZED</p>
-                    <p class="text-5xl font-bold mt-2" id="total-patients">0</p>
+        <!-- Population Diversity Notice -->
+        <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-lg mb-6">
+            <h3 class="font-bold text-yellow-800 text-sm mb-2">⚠️ Population Diversity & Bias Notice</h3>
+            <p class="text-xs text-yellow-800">
+                <strong>Current Limitation:</strong> This model uses simulated training data. Production systems must integrate 
+                population-specific databases (gnomAD, 1000 Genomes) to ensure equitable accuracy across African, Asian, 
+                European, Hispanic/Latinx, Middle Eastern, and South Asian populations.
+            </p>
+        </div>
+
+        <!-- Loading -->
+        <div id="loading" class="hidden bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg mb-6">
+            <p class="text-blue-800 font-semibold animate-pulse">⚙️ Processing genomic data...</p>
+        </div>
+
+        <!-- Platform Stats -->
+        <div id="platform-stats" class="hidden mb-6">
+            <div class="grid grid-cols-4 gap-4">
+                <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-4 rounded-lg shadow-xl">
+                    <p class="text-xs font-semibold opacity-90">PATIENTS ANALYZED</p>
+                    <p class="text-4xl font-bold mt-1" id="total-patients">0</p>
                 </div>
-                <div class="bg-gradient-to-br from-red-500 to-red-600 text-white p-6 rounded-lg shadow-xl">
-                    <p class="text-sm font-semibold opacity-90">PATHOGENIC VARIANTS</p>
-                    <p class="text-5xl font-bold mt-2" id="total-actionable">0</p>
+                <div class="bg-gradient-to-br from-red-500 to-red-600 text-white p-4 rounded-lg shadow-xl">
+                    <p class="text-xs font-semibold opacity-90">PATHOGENIC VARIANTS</p>
+                    <p class="text-4xl font-bold mt-1" id="total-actionable">0</p>
                 </div>
-                <div class="bg-gradient-to-br from-green-500 to-green-600 text-white p-6 rounded-lg shadow-xl">
-                    <p class="text-sm font-semibold opacity-90">THERAPIES MATCHED</p>
-                    <p class="text-5xl font-bold mt-2" id="total-therapies">0</p>
+                <div class="bg-gradient-to-br from-green-500 to-green-600 text-white p-4 rounded-lg shadow-xl">
+                    <p class="text-xs font-semibold opacity-90">THERAPIES MATCHED</p>
+                    <p class="text-4xl font-bold mt-1" id="total-therapies">0</p>
                 </div>
-                <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-6 rounded-lg shadow-xl">
-                    <p class="text-sm font-semibold opacity-90">PROCESSING TIME</p>
-                    <p class="text-5xl font-bold mt-2" id="processing-time">0s</p>
+                <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-4 rounded-lg shadow-xl">
+                    <p class="text-xs font-semibold opacity-90">PROCESSING TIME</p>
+                    <p class="text-4xl font-bold mt-1" id="processing-time">0s</p>
                 </div>
             </div>
         </div>
 
-        <!-- Results Container -->
+        <!-- Results -->
         <div id="results"></div>
 
-        <!-- Full Report Modal -->
+        <!-- Report Modal -->
         <div id="reportModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div class="bg-white rounded-lg shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
                 <div class="sticky top-0 bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 flex justify-between items-center">
@@ -89,30 +161,185 @@
     </div>
 
     <script>
+        let allPatientData = [];
+        
         const patientProfiles = [
-            {id: 'PT-2026-001', name: 'Sarah M.', age: 42, indication: 'Family history breast cancer'},
-            {id: 'PT-2026-002', name: 'John D.', age: 58, indication: 'Lynch syndrome screening'},
-            {id: 'PT-2026-003', name: 'Maria G.', age: 35, indication: 'Early onset cancer'},
-            {id: 'PT-2026-004', name: 'David L.', age: 61, indication: 'Lung cancer - EGFR testing'},
-            {id: 'PT-2026-005', name: 'Emily R.', age: 29, indication: 'Hereditary cancer panel'},
-            {id: 'PT-2026-006', name: 'Michael T.', age: 45, indication: 'Colorectal cancer panel'},
-            {id: 'PT-2026-007', name: 'Linda K.', age: 52, indication: 'Melanoma panel'},
-            {id: 'PT-2026-008', name: 'Robert H.', age: 67, indication: 'Prostate cancer genetics'},
-            {id: 'PT-2026-009', name: 'Jennifer P.', age: 38, indication: 'Ovarian cancer screening'},
-            {id: 'PT-2026-010', name: 'James W.', age: 55, indication: 'Pancreatic cancer panel'}
+            {id: 'PT-001', name: 'Sarah M.', age: 42, ancestry: 'European', indication: 'Family history breast cancer'},
+            {id: 'PT-002', name: 'John D.', age: 58, ancestry: 'European', indication: 'Lynch syndrome screening'},
+            {id: 'PT-003', name: 'Wei L.', age: 35, ancestry: 'East Asian', indication: 'Early onset cancer'},
+            {id: 'PT-004', name: 'Jamal K.', age: 61, ancestry: 'African American', indication: 'Lung cancer'},
+            {id: 'PT-005', name: 'Emily R.', age: 29, ancestry: 'European', indication: 'Hereditary cancer'},
+            {id: 'PT-006', name: 'Carlos M.', age: 45, ancestry: 'Hispanic/Latinx', indication: 'Colorectal cancer'},
+            {id: 'PT-007', name: 'Priya S.', age: 52, ancestry: 'South Asian', indication: 'Breast cancer'},
+            {id: 'PT-008', name: 'Mohammed A.', age: 67, ancestry: 'Middle Eastern', indication: 'Prostate cancer'},
+            {id: 'PT-009', name: 'Jennifer P.', age: 38, ancestry: 'European', indication: 'Ovarian cancer'},
+            {id: 'PT-010', name: 'Kenji T.', age: 55, ancestry: 'East Asian', indication: 'Gastric cancer'}
         ];
 
-        let allPatientData = [];
+        window.onload = function() {
+            populatePatientSelect();
+            populatePatientCheckboxes();
+        };
 
-        async function analyzePatients(count) {
-            const resultsDiv = document.getElementById('results');
-            const loadingDiv = document.getElementById('loading');
-            const statsDiv = document.getElementById('platform-stats');
+        function showMode(mode) {
+            ['upload-mode', 'single-mode', 'batch-mode'].forEach(m => {
+                document.getElementById(m).classList.add('hidden');
+            });
+            ['btn-upload', 'btn-single', 'btn-batch'].forEach(b => {
+                document.getElementById(b).className = document.getElementById(b).className.replace(/border-\w+-500|bg-\w+-50/g, '');
+                document.getElementById(b).className += ' border-2 hover:border-blue-500 hover:bg-blue-50';
+            });
             
-            document.getElementById('patient-count').textContent = count;
-            loadingDiv.classList.remove('hidden');
-            statsDiv.classList.add('hidden');
-            resultsDiv.innerHTML = '';
+            document.getElementById(mode + '-mode').classList.remove('hidden');
+            const btn = document.getElementById('btn-' + mode);
+            btn.className = btn.className.replace(/border-2.*/, 'border-2 border-blue-500 bg-blue-50');
+        }
+
+        function populatePatientSelect() {
+            const select = document.getElementById('patient-select');
+            patientProfiles.forEach(p => {
+                const option = document.createElement('option');
+                option.value = p.id;
+                option.textContent = `${p.name} (${p.id}) - ${p.age}y, ${p.ancestry} - ${p.indication}`;
+                select.appendChild(option);
+            });
+        }
+
+        function populatePatientCheckboxes() {
+            const container = document.getElementById('patient-checkboxes');
+            patientProfiles.forEach(p => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center gap-2 p-2 border rounded hover:bg-gray-50';
+                div.innerHTML = `
+                    <input type="checkbox" id="check-${p.id}" value="${p.id}" class="w-4 h-4">
+                    <label for="check-${p.id}" class="cursor-pointer text-sm flex-1">
+                        <strong>${p.name}</strong> (${p.id}) - ${p.ancestry}
+                    </label>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function selectAll() {
+            document.querySelectorAll('#patient-checkboxes input').forEach(cb => cb.checked = true);
+        }
+
+        function clearAll() {
+            document.querySelectorAll('#patient-checkboxes input').forEach(cb => cb.checked = false);
+        }
+
+        function downloadSampleVCF() {
+            const vcfContent = `##fileformat=VCFv4.2
+##reference=GRCh38
+##INFO=<ID=GENE,Number=1,Type=String,Description="Gene name">
+##INFO=<ID=CONSEQUENCE,Number=1,Type=String,Description="Variant consequence">
+##INFO=<ID=AF,Number=1,Type=Float,Description="Allele frequency">
+#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO
+chr17\t43044295\t.\tT\tC\t55.0\tPASS\tGENE=BRCA1;CONSEQUENCE=missense_variant;AF=0.0001
+chr13\t32315474\t.\tG\tT\t48.0\tPASS\tGENE=BRCA2;CONSEQUENCE=frameshift_variant;AF=0.0001
+chr7\t55242464\t.\tG\tA\t60.0\tPASS\tGENE=EGFR;CONSEQUENCE=missense_variant;AF=0.001
+chr2\t67890\t.\tC\tT\t45.0\tPASS\tGENE=TP53;CONSEQUENCE=nonsense_variant;AF=0.0002
+chr12\t25398285\t.\tC\tG\t52.0\tPASS\tGENE=KRAS;CONSEQUENCE=missense_variant;AF=0.0005`;
+            
+            const blob = new Blob([vcfContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'sample_patient.vcf';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        async function analyzeUploadedVCF() {
+            const fileInput = document.getElementById('vcf-upload');
+            if (!fileInput.files[0]) {
+                alert('Please select a VCF file');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            document.getElementById('loading').classList.remove('hidden');
+
+            try {
+                const response = await fetch('http://localhost:5000/api/upload-vcf', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const analysisResponse = await fetch('http://localhost:5000/api/analyze-batch', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ variants: data.variants })
+                    });
+                    
+                    const analysisData = await analysisResponse.json();
+                    
+                    document.getElementById('loading').classList.add('hidden');
+                    
+                    const customPatient = {
+                        id: document.getElementById('upload-patient-id').value || 'UPLOAD-001',
+                        name: document.getElementById('upload-patient-name').value || 'Uploaded Patient',
+                        age: '?',
+                        ancestry: 'Unknown',
+                        indication: 'Custom VCF Upload'
+                    };
+                    
+                    displayMultiPatientResults(analysisData, 1, '0.5', [customPatient]);
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                document.getElementById('loading').classList.add('hidden');
+                showError(error.message);
+            }
+        }
+
+        async function analyzeSinglePatient() {
+            const selectedId = document.getElementById('patient-select').value;
+            if (!selectedId) {
+                alert('Please select a patient');
+                return;
+            }
+
+            document.getElementById('loading').classList.remove('hidden');
+
+            try {
+                const response = await fetch('http://localhost:5000/api/sample-data');
+                const data = await response.json();
+                
+                const analysisResponse = await fetch('http://localhost:5000/api/analyze-batch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ variants: data.sample_variants.slice(0, 5) })
+                });
+                
+                const analysisData = await analysisResponse.json();
+                const processingTime = '0.5';
+                
+                document.getElementById('loading').classList.add('hidden');
+                
+                const patient = patientProfiles.find(p => p.id === selectedId);
+                displayMultiPatientResults(analysisData, 1, processingTime, [patient]);
+            } catch (error) {
+                document.getElementById('loading').classList.add('hidden');
+                showError(error.message);
+            }
+        }
+
+        async function analyzeBatchPatients() {
+            const selectedIds = Array.from(document.querySelectorAll('#patient-checkboxes input:checked')).map(cb => cb.value);
+            
+            if (selectedIds.length === 0) {
+                alert('Please select at least one patient');
+                return;
+            }
+
+            document.getElementById('loading').classList.remove('hidden');
 
             const startTime = Date.now();
 
@@ -127,19 +354,15 @@
                 });
                 
                 const analysisData = await analysisResponse.json();
-                
                 const processingTime = ((Date.now() - startTime) / 1000).toFixed(2);
                 
-                loadingDiv.classList.add('hidden');
-                displayMultiPatientResults(analysisData, count, processingTime, patientProfiles.slice(0, count));
+                document.getElementById('loading').classList.add('hidden');
+                
+                const selectedPatients = patientProfiles.filter(p => selectedIds.includes(p.id));
+                displayMultiPatientResults(analysisData, selectedPatients.length, processingTime, selectedPatients);
             } catch (error) {
-                loadingDiv.classList.add('hidden');
-                resultsDiv.innerHTML = `
-                    <div class="bg-red-100 border-l-4 border-red-500 p-6 rounded-lg">
-                        <p class="text-red-800 font-bold text-xl">⚠️ Error: ${error.message}</p>
-                        <p class="text-red-600 mt-2">Make sure the API is running: <code class="bg-red-200 px-2 py-1 rounded">python backend\\api.py</code></p>
-                    </div>
-                `;
+                document.getElementById('loading').classList.add('hidden');
+                showError(error.message);
             }
         }
 
@@ -149,15 +372,8 @@
             const annotations = data.annotations;
             
             const variantsPerPatient = Math.ceil(annotations.length / patientCount);
-            const actionableCount = annotations.filter(a => 
-                a.ml_classification.classification.includes('Pathogenic')
-            ).length;
-            
-            const therapyCount = annotations.filter(a => 
-                a.pharmacogenomics.drugs && 
-                a.pharmacogenomics.drugs.length > 0 && 
-                a.pharmacogenomics.drugs[0] !== 'Clinical trial consideration'
-            ).length;
+            const actionableCount = annotations.filter(a => a.ml_classification.classification.includes('Pathogenic')).length;
+            const therapyCount = annotations.filter(a => a.pharmacogenomics.drugs && a.pharmacogenomics.drugs.length > 0 && a.pharmacogenomics.drugs[0] !== 'Clinical trial consideration').length;
 
             document.getElementById('total-patients').textContent = patientCount;
             document.getElementById('total-actionable').textContent = actionableCount;
@@ -169,9 +385,7 @@
             for (let i = 0; i < patientCount; i++) {
                 const patientVariants = annotations.slice(i * variantsPerPatient, (i + 1) * variantsPerPatient);
                 
-                const pathogenic = patientVariants.filter(a => 
-                    a.ml_classification.classification.includes('Pathogenic')
-                );
+                const pathogenic = patientVariants.filter(a => a.ml_classification.classification.includes('Pathogenic'));
                 
                 const treatments = new Map();
                 pathogenic.forEach(a => {
@@ -205,49 +419,50 @@
 
             let html = `
                 <div class="bg-white rounded-lg shadow-xl p-8 mb-8">
-                    <h2 class="text-3xl font-bold text-gray-800 mb-6">Batch Analysis Summary</h2>
-                    <div class="grid grid-cols-3 gap-6">
-                        <div class="bg-blue-50 border-2 border-blue-300 p-6 rounded-lg">
-                            <p class="text-blue-800 font-semibold mb-2">Processing Speed</p>
-                            <p class="text-4xl font-bold text-blue-600">${(patientCount / parseFloat(processingTime)).toFixed(1)}</p>
-                            <p class="text-sm text-blue-700 mt-1">patients per second</p>
+                    <h2 class="text-3xl font-bold text-gray-800 mb-4">Analysis Results</h2>
+                    <div class="grid grid-cols-3 gap-4 mb-4">
+                        <div class="bg-blue-50 border-2 border-blue-300 p-4 rounded-lg">
+                            <p class="text-blue-800 font-semibold mb-1">Processing Speed</p>
+                            <p class="text-3xl font-bold text-blue-600">${(patientCount / parseFloat(processingTime)).toFixed(1)}</p>
+                            <p class="text-xs text-blue-700">patients per second</p>
                         </div>
-                        <div class="bg-green-50 border-2 border-green-300 p-6 rounded-lg">
-                            <p class="text-green-800 font-semibold mb-2">Treatment Matches</p>
-                            <p class="text-4xl font-bold text-green-600">${therapyCount}</p>
-                            <p class="text-sm text-green-700 mt-1">FDA-approved therapies</p>
+                        <div class="bg-green-50 border-2 border-green-300 p-4 rounded-lg">
+                            <p class="text-green-800 font-semibold mb-1">Treatment Matches</p>
+                            <p class="text-3xl font-bold text-green-600">${therapyCount}</p>
+                            <p class="text-xs text-green-700">FDA-approved therapies</p>
                         </div>
-                        <div class="bg-purple-50 border-2 border-purple-300 p-6 rounded-lg">
-                            <p class="text-purple-800 font-semibold mb-2">Total Variants</p>
-                            <p class="text-4xl font-bold text-purple-600">${annotations.length}</p>
-                            <p class="text-sm text-purple-700 mt-1">across all patients</p>
+                        <div class="bg-purple-50 border-2 border-purple-300 p-4 rounded-lg">
+                            <p class="text-purple-800 font-semibold mb-1">Total Variants</p>
+                            <p class="text-3xl font-bold text-purple-600">${annotations.length}</p>
+                            <p class="text-xs text-purple-700">across all patients</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="space-y-6">
+                <div class="space-y-4">
             `;
 
             allPatientData.forEach((result, index) => {
                 const priorityClass = result.pathogenicCount > 0 ? 'border-red-400 bg-red-50' : 'border-gray-300 bg-white';
                 const priorityBadge = result.pathogenicCount > 0 
-                    ? '<span class="bg-red-600 text-white px-3 py-1 rounded-full text-sm font-bold">⚠️ HIGH PRIORITY</span>'
-                    : '<span class="bg-green-600 text-white px-3 py-1 rounded-full text-sm font-bold">✓ NEGATIVE</span>';
+                    ? '<span class="bg-red-600 text-white px-3 py-1 rounded-full text-xs font-bold">⚠️ HIGH PRIORITY</span>'
+                    : '<span class="bg-green-600 text-white px-3 py-1 rounded-full text-xs font-bold">✓ NEGATIVE</span>';
 
                 html += `
                     <div class="border-2 ${priorityClass} rounded-lg shadow-lg p-6">
                         <div class="flex justify-between items-start mb-4">
                             <div>
                                 <h3 class="text-2xl font-bold text-gray-800">${result.patient.name}</h3>
-                                <p class="text-sm text-gray-600">ID: ${result.patient.id} | Age: ${result.patient.age} | ${result.patient.indication}</p>
+                                <p class="text-sm text-gray-600">ID: ${result.patient.id} | Age: ${result.patient.age} | Ancestry: ${result.patient.ancestry}</p>
+                                <p class="text-sm text-gray-600">${result.patient.indication}</p>
                             </div>
                             ${priorityBadge}
                         </div>
 
-                        <div class="grid grid-cols-4 gap-4 mb-4">
+                        <div class="grid grid-cols-4 gap-3 mb-4">
                             <div class="bg-white p-3 rounded border">
                                 <p class="text-xs text-gray-600">Variants</p>
-                                <p class="text-2xl font-bold text-gray-800">${result.variants.length}</p>
+                                <p class="text-2xl font-bold">${result.variants.length}</p>
                             </div>
                             <div class="bg-white p-3 rounded border">
                                 <p class="text-xs text-gray-600">Pathogenic</p>
@@ -258,7 +473,7 @@
                                 <p class="text-2xl font-bold text-green-600">${result.treatments.size}</p>
                             </div>
                             <div class="bg-white p-3 rounded border">
-                                <p class="text-xs text-gray-600">Processing</p>
+                                <p class="text-xs text-gray-600">Time</p>
                                 <p class="text-2xl font-bold text-blue-600">${(parseFloat(processingTime) / patientCount).toFixed(2)}s</p>
                             </div>
                         </div>
@@ -266,11 +481,7 @@
                         ${result.diseases.length > 0 ? `
                             <div class="bg-white p-4 rounded-lg border-2 border-red-300 mb-3">
                                 <p class="font-bold text-red-800 mb-2">🩺 Disease Risk:</p>
-                                <div class="space-y-1">
-                                    ${result.diseases.map(d => `
-                                        <p class="text-red-700">• ${d}</p>
-                                    `).join('')}
-                                </div>
+                                ${result.diseases.map(d => `<p class="text-red-700 text-sm">• ${d}</p>`).join('')}
                             </div>
                         ` : ''}
 
@@ -278,53 +489,42 @@
                             <div class="bg-white p-4 rounded-lg border-2 border-green-300 mb-3">
                                 <p class="font-bold text-green-800 mb-2">💊 Precision Therapies:</p>
                                 ${Array.from(result.treatments).map(([gene, data]) => `
-                                    <div class="mb-2">
-                                        <p class="font-semibold text-green-900">${gene}: ${data.drugs.join(', ')}</p>
+                                    <div class="mb-1">
+                                        <p class="font-semibold text-green-900 text-sm">${gene}: ${data.drugs.join(', ')}</p>
                                         <p class="text-xs text-green-700">${data.indication}</p>
                                     </div>
                                 `).join('')}
                             </div>
                         ` : ''}
 
-                        <!-- Show ALL Variants -->
                         <details class="bg-white p-4 rounded-lg border mb-3">
                             <summary class="font-bold text-gray-800 cursor-pointer hover:text-blue-600">
                                 📊 View All ${result.variants.length} Variants
                             </summary>
-                            <div class="mt-3 space-y-2 max-h-96 overflow-y-auto">
+                            <div class="mt-3 space-y-2 max-h-64 overflow-y-auto">
                                 ${result.variants.map(v => {
                                     const classification = v.ml_classification.classification;
-                                    let colorClass = 'bg-gray-100 text-gray-800';
-                                    if (classification.includes('Pathogenic') && !classification.includes('Likely')) colorClass = 'bg-red-100 text-red-800 border-red-300';
-                                    else if (classification.includes('Likely Pathogenic')) colorClass = 'bg-orange-100 text-orange-800 border-orange-300';
-                                    else if (classification.includes('Uncertain')) colorClass = 'bg-yellow-100 text-yellow-800 border-yellow-300';
+                                    let colorClass = 'bg-gray-100';
+                                    if (classification.includes('Pathogenic') && !classification.includes('Likely')) colorClass = 'bg-red-100 border-red-300';
+                                    else if (classification.includes('Likely Pathogenic')) colorClass = 'bg-orange-100 border-orange-300';
                                     
                                     return `
                                         <div class="${colorClass} border p-3 rounded text-sm">
-                                            <div class="flex justify-between items-start">
-                                                <div>
-                                                    <span class="font-bold">${v.variant.gene}</span>
-                                                    <span class="font-mono text-xs ml-2">${v.variant.id}</span>
-                                                </div>
+                                            <div class="flex justify-between">
+                                                <span class="font-bold">${v.variant.gene}</span>
                                                 <span class="font-semibold">${classification}</span>
                                             </div>
-                                            <p class="text-xs mt-1">${v.variant.consequence} | AF: ${v.variant.allele_frequency.toFixed(4)} | Confidence: ${(v.ml_classification.pathogenic_probability * 100).toFixed(1)}%</p>
+                                            <p class="text-xs mt-1">${v.variant.id} | ${v.variant.consequence} | AF: ${v.variant.allele_frequency.toFixed(4)}</p>
                                         </div>
                                     `;
                                 }).join('')}
                             </div>
                         </details>
 
-                        <div class="flex gap-3 mt-4">
-                            <button onclick="generateReport(${index})" class="bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 shadow-lg">
-                                📋 Generate Full Report
-                            </button>
-                            ${result.pathogenicCount > 0 ? `
-                                <button class="bg-red-600 text-white px-6 py-2 rounded-lg text-sm font-semibold hover:bg-red-700 shadow-lg">
-                                    📞 Schedule Counseling
-                                </button>
-                            ` : ''}
-                        </div>
+                        <button onclick="generateReport(${index})" 
+                                class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 font-semibold shadow-lg">
+                            📋 Generate Full Report
+                        </button>
                     </div>
                 `;
             });
@@ -341,102 +541,44 @@
             let reportHTML = `
                 <div class="mb-6">
                     <h3 class="text-2xl font-bold text-gray-800">Patient Information</h3>
-                    <div class="grid grid-cols-2 gap-4 mt-3">
-                        <div><span class="font-semibold">Name:</span> ${result.patient.name}</div>
-                        <div><span class="font-semibold">ID:</span> ${result.patient.id}</div>
-                        <div><span class="font-semibold">Age:</span> ${result.patient.age}</div>
-                        <div><span class="font-semibold">Indication:</span> ${result.patient.indication}</div>
+                    <div class="grid grid-cols-2 gap-4 mt-3 bg-gray-50 p-4 rounded">
+                        <div><strong>Name:</strong> ${result.patient.name}</div>
+                        <div><strong>ID:</strong> ${result.patient.id}</div>
+                        <div><strong>Age:</strong> ${result.patient.age}</div>
+                        <div><strong>Ancestry:</strong> ${result.patient.ancestry}</div>
+                        <div class="col-span-2"><strong>Indication:</strong> ${result.patient.indication}</div>
                     </div>
                 </div>
-
-                <div class="mb-6">
-                    <h3 class="text-2xl font-bold text-gray-800 mb-3">Summary</h3>
-                    <div class="grid grid-cols-3 gap-4">
-                        <div class="bg-gray-100 p-4 rounded">
-                            <p class="text-sm text-gray-600">Total Variants</p>
-                            <p class="text-3xl font-bold">${result.variants.length}</p>
-                        </div>
-                        <div class="bg-red-100 p-4 rounded">
-                            <p class="text-sm text-red-600">Pathogenic</p>
-                            <p class="text-3xl font-bold text-red-600">${result.pathogenicCount}</p>
-                        </div>
-                        <div class="bg-green-100 p-4 rounded">
-                            <p class="text-sm text-green-600">Therapies</p>
-                            <p class="text-3xl font-bold text-green-600">${result.treatments.size}</p>
-                        </div>
-                    </div>
-                </div>
-
-                ${result.diseases.length > 0 ? `
-                    <div class="mb-6">
-                        <h3 class="text-2xl font-bold text-red-700 mb-3">⚠️ Disease Risk Assessment</h3>
-                        ${result.diseases.map(d => `
-                            <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-3">
-                                <p class="font-bold text-red-800">${d}</p>
-                                <p class="text-sm text-red-700 mt-2">Pathogenic variant detected. Enhanced surveillance and genetic counseling recommended.</p>
-                            </div>
-                        `).join('')}
-                    </div>
-                ` : ''}
-
-                ${result.treatments.size > 0 ? `
-                    <div class="mb-6">
-                        <h3 class="text-2xl font-bold text-green-700 mb-3">💊 Precision Medicine Recommendations</h3>
-                        ${Array.from(result.treatments).map(([gene, data]) => `
-                            <div class="bg-green-50 border-l-4 border-green-500 p-4 mb-3">
-                                <p class="font-bold text-green-800">${gene} Gene</p>
-                                <p class="text-sm text-gray-700 mt-1">${data.indication}</p>
-                                <p class="text-sm text-green-700 mt-2">
-                                    <strong>FDA-Approved Therapies:</strong> ${data.drugs.join(', ')}
-                                </p>
-                            </div>
-                        `).join('')}
-                    </div>
-                ` : ''}
 
                 <div class="mb-6">
                     <h3 class="text-2xl font-bold text-gray-800 mb-3">Complete Variant List</h3>
-                    <div class="space-y-2">
+                    <div class="space-y-3">
                         ${result.variants.map(v => {
                             const classification = v.ml_classification.classification;
                             let colorClass = 'bg-gray-50';
                             if (classification.includes('Pathogenic')) colorClass = 'bg-red-50 border-red-300';
-                            else if (classification.includes('Uncertain')) colorClass = 'bg-yellow-50 border-yellow-300';
                             
                             return `
-                                <div class="${colorClass} border p-4 rounded">
+                                <div class="${colorClass} border-2 p-4 rounded-lg">
                                     <div class="flex justify-between items-start mb-2">
                                         <div>
                                             <span class="font-bold text-lg">${v.variant.gene}</span>
-                                            <span class="font-mono text-sm ml-2 text-gray-600">${v.variant.id}</span>
+                                            <span class="font-mono text-sm ml-2">${v.variant.id}</span>
                                         </div>
                                         <span class="font-semibold">${classification}</span>
                                     </div>
-                                    <div class="grid grid-cols-3 gap-2 text-sm">
-                                        <div><span class="text-gray-600">Consequence:</span> ${v.variant.consequence}</div>
-                                        <div><span class="text-gray-600">Allele Freq:</span> ${v.variant.allele_frequency.toFixed(4)}</div>
-                                        <div><span class="text-gray-600">ML Confidence:</span> ${(v.ml_classification.pathogenic_probability * 100).toFixed(1)}%</div>
-                                    </div>
-                                    <p class="text-sm text-gray-700 mt-2">${v.ml_classification.clinical_significance}</p>
+                                    <p class="text-sm mb-2">${v.variant.consequence} | Allele Freq: ${v.variant.allele_frequency.toFixed(4)} | Quality: ${v.variant.quality}</p>
+                                    <p class="text-sm text-gray-700">${v.ml_classification.clinical_significance}</p>
+                                    ${v.pharmacogenomics.drugs.length > 0 ? `
+                                        <div class="mt-2 bg-green-50 p-2 rounded border border-green-300">
+                                            <p class="text-sm font-semibold text-green-800">💊 ${v.pharmacogenomics.drugs.join(', ')}</p>
+                                            <p class="text-xs text-green-700">${v.pharmacogenomics.indication}</p>
+                                        </div>
+                                    ` : ''}
                                 </div>
                             `;
                         }).join('')}
                     </div>
-                </div>
-
-                <div class="bg-blue-50 border-l-4 border-blue-500 p-6">
-                    <h3 class="font-bold text-blue-800 mb-3">Clinical Recommendations</h3>
-                    <ul class="space-y-2 text-sm text-blue-900">
-                        ${result.pathogenicCount > 0 ? `
-                            <li>✓ Genetic counseling recommended</li>
-                            <li>✓ Family cascade testing indicated</li>
-                            <li>✓ Enhanced surveillance protocols</li>
-                        ` : ''}
-                        ${result.treatments.size > 0 ? `
-                            <li>✓ Oncology consultation for targeted therapy</li>
-                        ` : ''}
-                        <li>✓ Periodic re-evaluation of uncertain variants</li>
-                    </ul>
                 </div>
             `;
 
@@ -446,6 +588,15 @@
 
         function closeReport() {
             document.getElementById('reportModal').classList.add('hidden');
+        }
+
+        function showError(message) {
+            document.getElementById('results').innerHTML = `
+                <div class="bg-red-100 border-l-4 border-red-500 p-6 rounded-lg">
+                    <p class="text-red-800 font-bold">⚠️ Error: ${message}</p>
+                    <p class="text-red-600 mt-2">Make sure the API is running: <code class="bg-red-200 px-2 py-1 rounded">python backend/api.py</code></p>
+                </div>
+            `;
         }
     </script>
 </body>
