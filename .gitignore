@@ -8,16 +8,10 @@ venv/
 env/
 *.egg-info/
 
-# Data files
-*.vcf
-*.bam
-*.sam
-data/*.csv
+# Large files only (keep small samples)
+data/*.bam
+data/*.sam
 uploads/*
-
-# Models
-models/*.pkl
-models/*.h5
 
 # IDE
 .vscode/
