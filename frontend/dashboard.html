@@ -10,7 +10,7 @@
     <div class="container mx-auto p-6">
         <header class="mb-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg shadow-xl p-6 text-white">
             <h1 class="text-4xl font-bold">GenoInsight</h1>
-            <p class="text-lg mt-2">AI-Powered Precision Medicine with gnomAD Integration</p>
+            <p class="text-lg mt-2">AI-Powered Precision Medicine</p>
         </header>
 
         <div class="bg-white rounded-lg shadow-xl p-6 mb-8">
@@ -35,57 +35,46 @@
 
             <div id="upload-mode" class="hidden bg-blue-50 p-6 rounded-lg">
                 <h3 class="font-bold text-lg mb-3">Upload New Patient VCF</h3>
-                <input type="file" accept=".vcf" id="vcf-upload" class="w-full p-3 border-2 rounded mb-3">
+                <input type="file" accept=".vcf" id="vcf-upload" class="w-full p-3 border-2 rounded mb-2">
                 <input type="text" id="patient-name" placeholder="Patient Name" class="w-full p-2 border rounded mb-2">
-                <input type="text" id="patient-id" placeholder="Patient ID (e.g., PT-NEW-001)" class="w-full p-2 border rounded mb-2">
+                <input type="text" id="patient-id" placeholder="Patient ID" class="w-full p-2 border rounded mb-2">
                 <input type="number" id="patient-age" placeholder="Age" class="w-full p-2 border rounded mb-2">
                 <select id="patient-gender" class="w-full p-2 border rounded mb-2">
-                    <option value="">Select Gender</option>
+                    <option value="">Gender</option>
                     <option value="Male">Male</option>
                     <option value="Female">Female</option>
-                    <option value="Other">Other</option>
                 </select>
                 <select id="upload-ancestry" class="w-full p-3 border-2 rounded mb-3">
-                    <option value="">Select Ancestry (for gnomAD frequency)</option>
-                    <option value="African American">African/African American</option>
+                    <option value="">Ancestry</option>
+                    <option value="African American">African American</option>
                     <option value="East Asian">East Asian</option>
                     <option value="South Asian">South Asian</option>
                     <option value="European">European</option>
                     <option value="Hispanic/Latinx">Hispanic/Latino</option>
                     <option value="Middle Eastern">Middle Eastern</option>
                 </select>
-                <p class="text-xs text-gray-600 mb-3">Ancestry information used for population-specific variant interpretation</p>
-                <button onclick="analyzeUpload()" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold">🧬 Analyze Uploaded VCF</button>
+                <button onclick="analyzeUpload()" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold">🧬 Analyze</button>
                 <div class="mt-4 pt-4 border-t">
-                    <p class="text-sm font-semibold mb-2">Need a sample VCF?</p>
-                    <button onclick="downloadSample()" class="bg-green-600 text-white px-4 py-2 rounded text-sm">📥 Download Sample VCF</button>
+                    <button onclick="downloadSample()" class="bg-green-600 text-white px-4 py-2 rounded text-sm">📥 Download Sample</button>
                 </div>
             </div>
 
             <div id="single-mode" class="hidden bg-green-50 p-6 rounded-lg">
-                <h3 class="font-bold text-lg mb-3">Select Patient from Database</h3>
                 <select id="patient-select" class="w-full p-3 border-2 rounded mb-3"></select>
-                <button onclick="analyzeSingle()" class="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold">🧬 Analyze Patient</button>
+                <button onclick="analyzeSingle()" class="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold">🧬 Analyze</button>
             </div>
 
             <div id="batch-mode" class="hidden bg-purple-50 p-6 rounded-lg">
-                <h3 class="font-bold text-lg mb-3">Select Multiple Patients</h3>
                 <div id="patient-checks" class="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto mb-4"></div>
                 <div class="flex gap-3">
-                    <button onclick="selectAll()" class="bg-gray-600 text-white px-4 py-2 rounded">✓ Select All</button>
-                    <button onclick="analyzeBatch()" class="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold flex-1">🚀 Analyze Selected</button>
+                    <button onclick="selectAll()" class="bg-gray-600 text-white px-4 py-2 rounded">✓ All</button>
+                    <button onclick="analyzeBatch()" class="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold flex-1">🚀 Analyze</button>
                 </div>
             </div>
         </div>
 
-        <div class="bg-purple-50 border-l-4 border-purple-500 p-4 rounded mb-6">
-            <p class="text-sm text-purple-800">
-                <strong>🌍 gnomAD Integration:</strong> Population-specific allele frequencies ensure equitable variant interpretation across all ancestries.
-            </p>
-        </div>
-
         <div id="loading" class="hidden bg-blue-100 p-4 rounded-lg mb-6">
-            <p class="text-blue-800 font-semibold animate-pulse">⚙️ Processing genomic data...</p>
+            <p class="text-blue-800 font-semibold animate-pulse">⚙️ Processing...</p>
         </div>
 
         <div id="stats" class="hidden mb-6">
@@ -151,7 +140,7 @@
         }
 
         function downloadSample() {
-            const vcf = `##fileformat=VCFv4.2\n#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\nchr17\t43044295\t.\tT\tC\t55.0\tPASS\tGENE=BRCA1;CONSEQUENCE=missense_variant;AF=0.0001\nchr13\t32315474\t.\tG\tT\t48.0\tPASS\tGENE=BRCA2;CONSEQUENCE=frameshift_variant;AF=0.0001`;
+            const vcf = "##fileformat=VCFv4.2\n#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\nchr17\t43044295\t.\tT\tC\t55.0\tPASS\tGENE=BRCA1;CONSEQUENCE=missense_variant;AF=0.0001\nchr13\t32315474\t.\tG\tT\t48.0\tPASS\tGENE=BRCA2;CONSEQUENCE=frameshift_variant;AF=0.0001";
             const blob = new Blob([vcf], {type: 'text/plain'});
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
@@ -167,7 +156,7 @@
             const gender = document.getElementById('patient-gender').value;
             const ancestry = document.getElementById('upload-ancestry').value;
 
-            if (!file || !name || !patientId) { alert('Enter file, name, and ID'); return; }
+            if (!file || !name || !patientId) { alert('Fill required fields'); return; }
 
             const formData = new FormData();
             formData.append('file', file);
@@ -188,7 +177,7 @@
 
         async function analyzeSingle() {
             const id = document.getElementById('patient-select').value;
-            if (!id) { alert('Select a patient'); return; }
+            if (!id) { alert('Select patient'); return; }
             document.getElementById('loading').classList.remove('hidden');
 
             try {
@@ -243,6 +232,7 @@
                 const p = pts[i];
                 const vars = anns.slice(i * perPt, (i + 1) * perPt);
                 const path = vars.filter(v => v.ml_classification.classification.includes('Pathogenic'));
+                const diseases = [...new Set(path.map(v => v.disease_association.diseases[0]).filter(d => d && d !== 'Unknown/Not in database'))];
                 
                 allData.push({p: p, vars: vars});
                 
@@ -251,63 +241,54 @@
                         <div class="flex justify-between mb-3">
                             <div>
                                 <h3 class="text-2xl font-bold">${p.name}</h3>
-                                <p class="text-sm text-gray-600">${p.id} | ${p.age}y | ${p.gender || 'Unknown'} | <strong>${p.ancestry}</strong></p>
+                                <p class="text-sm text-gray-600">${p.id} | ${p.age}y | ${p.gender || ''} | ${p.ancestry}</p>
                                 <p class="text-sm text-gray-600">${p.indication}</p>
                             </div>
                             <span class="px-3 py-1 rounded-full text-sm font-bold ${path.length > 0 ? 'bg-red-600 text-white' : 'bg-green-600 text-white'}">
-                                ${path.length > 0 ? '⚠️ HIGH PRIORITY' : '✓ NEGATIVE'}
+                                ${path.length > 0 ? 'HIGH PRIORITY' : 'NEGATIVE'}
                             </span>
                         </div>
                         
                         <div class="grid grid-cols-4 gap-3 mb-4">
-                            <div class="bg-white p-3 rounded border-2"><p class="text-xs text-gray-600">Variants</p><p class="text-2xl font-bold">${vars.length}</p></div>
-                            <div class="bg-white p-3 rounded border-2"><p class="text-xs text-gray-600">Pathogenic</p><p class="text-2xl font-bold text-red-600">${path.length}</p></div>
-                            <div class="bg-white p-3 rounded border-2"><p class="text-xs text-gray-600">Therapies</p><p class="text-2xl font-bold text-green-600">${vars.filter(v => v.pharmacogenomics.drugs.length > 0 && v.pharmacogenomics.drugs[0] !== 'Clinical trial consideration').length}</p></div>
-                            <div class="bg-white p-3 rounded border-2"><p class="text-xs text-gray-600">Time</p><p class="text-2xl font-bold text-blue-600">${(parseFloat(time)/count).toFixed(2)}s</p></div>
+                            <div class="bg-white p-3 rounded border-2"><p class="text-xs">Variants</p><p class="text-2xl font-bold">${vars.length}</p></div>
+                            <div class="bg-white p-3 rounded border-2"><p class="text-xs">Pathogenic</p><p class="text-2xl font-bold text-red-600">${path.length}</p></div>
+                            <div class="bg-white p-3 rounded border-2"><p class="text-xs">Therapies</p><p class="text-2xl font-bold text-green-600">${vars.filter(v => v.pharmacogenomics.drugs.length > 0 && v.pharmacogenomics.drugs[0] !== 'Clinical trial consideration').length}</p></div>
+                            <div class="bg-white p-3 rounded border-2"><p class="text-xs">Time</p><p class="text-2xl font-bold text-blue-600">${(parseFloat(time)/count).toFixed(2)}s</p></div>
                         </div>
 
-                        ${path.length > 0 ? `
+                        ${diseases.length > 0 ? `
                             <div class="bg-white p-4 rounded-lg border-2 border-red-300 mb-3">
-                                <p class="font-bold text-red-800 mb-2">🩺 Disease Risks:</p>
-                                ${path.map(v => `<p class="text-sm text-red-700">• ${v.disease_association.diseases[0]}</p>`).join('')}
+                                <p class="font-bold text-red-800 mb-2">Disease Risks:</p>
+                                ${diseases.map(d => `<p class="text-sm text-red-700">• ${d}</p>`).join('')}
                             </div>
-                        ` : ''}
+                        ` : (path.length > 0 ? `
+                            <div class="bg-white p-4 rounded-lg border-2 border-yellow-300 mb-3">
+                                <p class="text-sm text-yellow-800">Pathogenic variants detected. Genetic counseling recommended.</p>
+                            </div>
+                        ` : '')}
 
                         ${path.filter(v => v.pharmacogenomics.drugs.length > 0 && v.pharmacogenomics.drugs[0] !== 'Clinical trial consideration').length > 0 ? `
                             <div class="bg-white p-4 rounded-lg border-2 border-green-300 mb-3">
-                                <p class="font-bold text-green-800 mb-2">💊 Precision Therapies:</p>
-                                ${path.filter(v => v.pharmacogenomics.drugs.length > 0).map(v => `<p class="text-sm text-green-900"><strong>${v.variant.gene}:</strong> ${v.pharmacogenomics.drugs.join(', ')}</p>`).join('')}
+                                <p class="font-bold text-green-800 mb-2">Precision Therapies:</p>
+                                ${[...new Set(path.filter(v => v.pharmacogenomics.drugs.length > 0 && v.pharmacogenomics.drugs[0] !== 'Clinical trial consideration').map(v => v.variant.gene + ': ' + v.pharmacogenomics.drugs.join(', ')))].map(t => `<p class="text-sm">• ${t}</p>`).join('')}
                             </div>
                         ` : ''}
 
                         <details class="bg-white p-4 rounded-lg border-2 mb-3">
-                            <summary class="font-bold cursor-pointer hover:text-blue-600">📊 View All ${vars.length} Variants</summary>
+                            <summary class="font-bold cursor-pointer hover:text-blue-600">View All ${vars.length} Variants</summary>
                             <div class="mt-3 space-y-2 max-h-96 overflow-y-auto">
                                 ${vars.map(v => {
                                     const c = v.ml_classification.classification;
                                     let col = 'bg-gray-100';
                                     if (c === 'Pathogenic') col = 'bg-red-100 border-red-300';
                                     else if (c === 'Likely Pathogenic') col = 'bg-orange-100 border-orange-300';
-                                    
-                                    const popData = v.population_data || {};
-                                    const popFreq = popData.allele_frequency_in_population;
-                                    
-                                    return `
-                                        <div class="${col} border-2 p-3 rounded">
-                                            <div class="flex justify-between">
-                                                <strong>${v.variant.gene}</strong>
-                                                <span class="text-sm">${c}</span>
-                                            </div>
-                                            <p class="text-xs text-gray-600 mt-1">${v.variant.id} | ${v.variant.consequence}</p>
-                                            ${popFreq ? `<p class="text-xs text-purple-700 mt-1 font-semibold">🌍 gnomAD ${p.ancestry}: ${popFreq.toFixed(5)}</p>` : ''}
-                                        </div>
-                                    `;
+                                    return `<div class="${col} border-2 p-3 rounded"><div class="flex justify-between"><strong>${v.variant.gene}</strong><span class="text-sm">${c}</span></div><p class="text-xs mt-1">${v.variant.id}</p></div>`;
                                 }).join('')}
                             </div>
                         </details>
 
                         <button onclick="showReport(${i})" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold shadow hover:bg-blue-700">
-                            📋 Generate Full Clinical Report
+                            Generate Full Report
                         </button>
                     </div>
                 `;
@@ -318,52 +299,14 @@
 
         function showReport(idx) {
             const r = allData[idx];
-            let html = `
-                <div class="mb-6 bg-gray-50 p-4 rounded">
-                    <h3 class="text-2xl font-bold mb-3">Patient Information</h3>
-                    <p><strong>Name:</strong> ${r.p.name}</p>
-                    <p><strong>ID:</strong> ${r.p.id}</p>
-                    <p><strong>Age:</strong> ${r.p.age} | <strong>Gender:</strong> ${r.p.gender || 'Unknown'}</p>
-                    <p><strong>Ancestry:</strong> ${r.p.ancestry}</p>
-                    <p><strong>Indication:</strong> ${r.p.indication}</p>
-                </div>
-                <div class="mb-6">
-                    <h3 class="text-2xl font-bold mb-3">Complete Variant Analysis</h3>
-                    <div class="space-y-3">
-            `;
+            let html = `<div class="mb-6 bg-gray-50 p-4 rounded"><h3 class="text-2xl font-bold mb-3">Patient</h3><p><strong>Name:</strong> ${r.p.name}</p><p><strong>ID:</strong> ${r.p.id} | Age: ${r.p.age} | Gender: ${r.p.gender}</p><p><strong>Ancestry:</strong> ${r.p.ancestry}</p></div><div class="mb-6"><h3 class="text-2xl font-bold mb-3">Variants</h3><div class="space-y-3">`;
             
             r.vars.forEach(v => {
                 const c = v.ml_classification.classification;
                 let col = 'bg-gray-50';
                 if (c === 'Pathogenic') col = 'bg-red-50 border-red-400';
-                else if (c === 'Likely Pathogenic') col = 'bg-orange-50 border-orange-400';
                 
-                const popData = v.population_data || {};
-                const popFreq = popData.allele_frequency_in_population;
-                
-                html += `
-                    <div class="${col} border-2 p-4 rounded-lg">
-                        <div class="flex justify-between mb-2">
-                            <strong class="text-xl">${v.variant.gene}</strong>
-                            <span class="font-semibold">${c}</span>
-                        </div>
-                        <p class="text-sm">${v.variant.id}</p>
-                        <p class="text-sm">${v.variant.consequence} | General AF: ${v.variant.allele_frequency.toFixed(4)}</p>
-                        ${popFreq ? `
-                            <div class="mt-2 bg-purple-50 border border-purple-300 p-2 rounded">
-                                <p class="text-sm text-purple-800"><strong>🌍 gnomAD ${r.p.ancestry}:</strong> ${popFreq.toFixed(5)}</p>
-                                <p class="text-xs text-purple-700">Population-specific frequency for unbiased interpretation</p>
-                            </div>
-                        ` : ''}
-                        <p class="text-sm text-gray-700 mt-2">${v.ml_classification.clinical_significance}</p>
-                        ${v.pharmacogenomics.drugs.length > 0 && v.pharmacogenomics.drugs[0] !== 'Clinical trial consideration' ? `
-                            <div class="mt-3 bg-green-100 p-3 rounded border border-green-400">
-                                <p class="font-semibold text-green-800">💊 FDA-Approved:</p>
-                                <p class="text-green-900">${v.pharmacogenomics.drugs.join(', ')}</p>
-                            </div>
-                        ` : ''}
-                    </div>
-                `;
+                html += `<div class="${col} border-2 p-4 rounded-lg"><div class="flex justify-between mb-2"><strong class="text-xl">${v.variant.gene}</strong><span>${c}</span></div><p class="text-sm">${v.variant.id} | ${v.variant.consequence}</p><p class="text-sm text-gray-700 mt-2">${v.ml_classification.clinical_significance}</p>${v.pharmacogenomics.drugs.length > 0 && v.pharmacogenomics.drugs[0] !== 'Clinical trial consideration' ? `<div class="mt-2 bg-green-100 p-2 rounded"><p class="font-semibold text-green-800">${v.pharmacogenomics.drugs.join(', ')}</p></div>` : ''}</div>`;
             });
             
             html += '</div></div>';
