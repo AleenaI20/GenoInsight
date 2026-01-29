@@ -4,8 +4,13 @@ __pycache__/
 venv/
 env/
 
-# Large uploads only
+# Uploads
 uploads/*
+
+# Ngrok
+ngrok.exe
+ngrok.zip
+*.ngrok-free.app
 
 # IDE
 .vscode/
