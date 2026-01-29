@@ -16,7 +16,9 @@ from ml_classifier import VariantPathogenicityClassifier
 from clinical_annotator import ClinicalAnnotator
 
 app = Flask(__name__)
-CORS(app)
+
+# FIX CORS - Allow all origins for ngrok
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'vcf', 'txt'}
@@ -162,13 +164,11 @@ if __name__ == '__main__':
     
     try:
         ml_classifier.load_model()
-        print("Pre-trained model loaded!")
+        print("Model loaded!")
     except:
-        print("Training new model...")
         ml_classifier.train_model()
         ml_classifier.save_model()
-        print("Model trained and saved!")
+        print("Model trained!")
     
-    print("Starting GenoInsight API server...")
-    print("API ready at http://localhost:5000")
+    print("Starting API...")
     app.run(debug=True, host='0.0.0.0', port=5000)

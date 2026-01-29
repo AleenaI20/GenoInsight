@@ -1,91 +1,106 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GenoInsight</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 min-h-screen">
-    <div class="container mx-auto p-6">
-        <header class="mb-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg shadow-xl p-6 text-white">
-            <h1 class="text-4xl font-bold">GenoInsight</h1>
-            <p class="text-lg mt-2">AI-Powered Precision Medicine</p>
-        </header>
+<body class="bg-gray-50 p-6">
+    <div class="max-w-7xl mx-auto">
+        <div class="bg-blue-600 text-white p-6 rounded-lg mb-6">
+            <h1 class="text-3xl font-bold">GenoInsight Platform</h1>
+            <p class="text-sm mt-1">AI-Powered Precision Medicine</p>
+        </div>
 
-        <div class="bg-white rounded-lg shadow-xl p-6 mb-8">
-            <h2 class="text-2xl font-bold mb-4">Analysis Options</h2>
-            
-            <div class="grid grid-cols-3 gap-4 mb-6">
-                <button onclick="showMode('upload')" class="p-6 border-2 rounded-lg hover:bg-blue-50">
-                    <div class="text-4xl mb-2">📤</div>
-                    <h3 class="font-bold">Upload VCF</h3>
+        <!-- Mode Selection Tabs -->
+        <div class="bg-white rounded-lg shadow mb-6 p-4">
+            <div class="flex gap-3 mb-4">
+                <button onclick="switchTab('database')" id="tab-database" class="px-6 py-3 rounded-lg font-bold bg-blue-600 text-white">
+                    Database Patients
                 </button>
-                
-                <button onclick="showMode('single')" class="p-6 border-2 rounded-lg hover:bg-green-50">
-                    <div class="text-4xl mb-2">👤</div>
-                    <h3 class="font-bold">Single Patient</h3>
-                </button>
-                
-                <button onclick="showMode('batch')" class="p-6 border-2 rounded-lg hover:bg-purple-50">
-                    <div class="text-4xl mb-2">👥</div>
-                    <h3 class="font-bold">Batch</h3>
+                <button onclick="switchTab('upload')" id="tab-upload" class="px-6 py-3 rounded-lg font-bold bg-gray-200 text-gray-700">
+                    Upload New VCF
                 </button>
             </div>
 
-            <div id="upload-mode" class="hidden bg-blue-50 p-6 rounded-lg">
-                <input type="file" accept=".vcf" id="vcf-upload" class="w-full p-3 border-2 rounded mb-3">
-                <input type="text" id="patient-name" placeholder="Patient Name" class="w-full p-2 border rounded mb-3">
-                <button onclick="analyzeUpload()" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold">🧬 Analyze</button>
-                <div class="mt-4 pt-4 border-t">
-                    <button onclick="downloadSample()" class="bg-green-600 text-white px-4 py-2 rounded text-sm">📥 Download Sample VCF</button>
+            <!-- Database Mode -->
+            <div id="mode-database">
+                <h2 class="text-xl font-bold mb-4">Select Patients from Database</h2>
+                <div id="patients" class="space-y-2 mb-4"></div>
+                <button onclick="analyze()" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold">
+                    🧬 Analyze Selected Patients
+                </button>
+            </div>
+
+            <!-- Upload Mode -->
+            <div id="mode-upload" class="hidden">
+                <h2 class="text-xl font-bold mb-4">Upload Patient VCF File</h2>
+                
+                <div class="mb-4">
+                    <label class="block font-semibold mb-2">VCF File:</label>
+                    <input type="file" accept=".vcf" id="vcf-file" class="w-full p-3 border-2 rounded-lg">
                 </div>
-            </div>
 
-            <div id="single-mode" class="hidden bg-green-50 p-6 rounded-lg">
-                <select id="patient-select" class="w-full p-3 border-2 rounded mb-3"></select>
-                <button onclick="analyzeSingle()" class="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold">🧬 Analyze</button>
-            </div>
+                <div class="mb-4">
+                    <label class="block font-semibold mb-2">Patient Name:</label>
+                    <input type="text" id="upload-name" placeholder="e.g., Jane Doe" class="w-full p-3 border-2 rounded-lg">
+                </div>
 
-            <div id="batch-mode" class="hidden bg-purple-50 p-6 rounded-lg">
-                <div id="patient-checks" class="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto mb-4"></div>
-                <div class="flex gap-3">
-                    <button onclick="selectAll()" class="bg-gray-600 text-white px-4 py-2 rounded">✓ All</button>
-                    <button onclick="analyzeBatch()" class="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold flex-1">🚀 Analyze</button>
+                <div class="mb-4">
+                    <label class="block font-semibold mb-2">Patient ID:</label>
+                    <input type="text" id="upload-id" placeholder="e.g., PT-NEW-001" class="w-full p-3 border-2 rounded-lg">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block font-semibold mb-2">Ancestry/Population:</label>
+                    <select id="upload-ancestry" class="w-full p-3 border-2 rounded-lg">
+                        <option value="">Select ancestry</option>
+                        <option value="African/African American">African/African American</option>
+                        <option value="East Asian">East Asian</option>
+                        <option value="South Asian">South Asian</option>
+                        <option value="European">European</option>
+                        <option value="Hispanic/Latinx">Hispanic/Latinx</option>
+                        <option value="Middle Eastern">Middle Eastern</option>
+                        <option value="Mixed/Other">Mixed/Other</option>
+                    </select>
+                    <p class="text-xs text-gray-600 mt-1">Important for reducing population bias in variant interpretation</p>
+                </div>
+
+                <button onclick="analyzeUpload()" class="bg-green-600 text-white px-6 py-3 rounded-lg font-bold">
+                    🧬 Analyze Uploaded VCF
+                </button>
+
+                <div class="mt-6 pt-6 border-t">
+                    <p class="font-semibold mb-2">Need a sample VCF file?</p>
+                    <button onclick="downloadSample()" class="bg-gray-600 text-white px-4 py-2 rounded">
+                        📥 Download Sample VCF
+                    </button>
                 </div>
             </div>
         </div>
 
-        <div id="loading" class="hidden bg-blue-100 p-4 rounded-lg mb-6">
-            <p class="text-blue-800 font-semibold animate-pulse">⚙️ Processing...</p>
-        </div>
-
-        <div id="stats" class="hidden mb-6">
-            <div class="grid grid-cols-4 gap-4">
-                <div class="bg-blue-600 text-white p-4 rounded-lg"><p class="text-xs">PATIENTS</p><p class="text-4xl font-bold" id="stat-patients">0</p></div>
-                <div class="bg-red-600 text-white p-4 rounded-lg"><p class="text-xs">PATHOGENIC</p><p class="text-4xl font-bold" id="stat-pathogenic">0</p></div>
-                <div class="bg-green-600 text-white p-4 rounded-lg"><p class="text-xs">THERAPIES</p><p class="text-4xl font-bold" id="stat-therapies">0</p></div>
-                <div class="bg-purple-600 text-white p-4 rounded-lg"><p class="text-xs">TIME</p><p class="text-4xl font-bold" id="stat-time">0s</p></div>
-            </div>
+        <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded mb-6">
+            <p class="text-sm text-yellow-800">
+                <strong>Population Diversity:</strong> Variant interpretation accuracy varies by ancestry. 
+                This demo includes patients from African American, East Asian, South Asian, European, Hispanic/Latinx, and Middle Eastern populations.
+            </p>
         </div>
 
         <div id="results"></div>
-
-        <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div class="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-y-auto">
-                <div class="bg-blue-600 text-white p-6 flex justify-between items-center sticky top-0">
-                    <h2 class="text-3xl font-bold">Clinical Report</h2>
-                    <button onclick="closeModal()" class="text-3xl font-bold">&times;</button>
+        
+        <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="bg-blue-600 text-white p-4 flex justify-between">
+                    <h2 class="text-2xl font-bold">Clinical Report</h2>
+                    <button onclick="closeModal()" class="text-2xl">&times;</button>
                 </div>
-                <div id="modal-content" class="p-8"></div>
+                <div id="modal-content" class="p-6"></div>
             </div>
         </div>
     </div>
 
     <script>
-        const API = 'https://barabara-nonconfirmatory-protectingly.ngrok-free.app';
         let allData = [];
-        
         const patients = [
             {id: 'PT-001', name: 'Sarah M.', age: 42, ancestry: 'European', indication: 'Family history breast cancer'},
             {id: 'PT-002', name: 'Wei L.', age: 35, ancestry: 'East Asian', indication: 'Early onset cancer'},
@@ -94,235 +109,318 @@
             {id: 'PT-005', name: 'Priya S.', age: 52, ancestry: 'South Asian', indication: 'Breast cancer'},
             {id: 'PT-006', name: 'Mohammed A.', age: 67, ancestry: 'Middle Eastern', indication: 'Prostate cancer'},
             {id: 'PT-007', name: 'Jennifer P.', age: 38, ancestry: 'European', indication: 'Ovarian cancer'},
-            {id: 'PT-008', name: 'Kenji T.', age: 55, ancestry: 'East Asian', indication: 'Gastric cancer'},
-            {id: 'PT-009', name: 'Emily R.', age: 29, ancestry: 'European', indication: 'Hereditary cancer'},
-            {id: 'PT-010', name: 'John D.', age: 58, ancestry: 'European', indication: 'Lynch syndrome'}
+            {id: 'PT-008', name: 'Kenji T.', age: 55, ancestry: 'East Asian', indication: 'Gastric cancer'}
         ];
 
         window.onload = () => {
-            const sel = document.getElementById('patient-select');
+            const div = document.getElementById('patients');
             patients.forEach(p => {
-                const opt = document.createElement('option');
-                opt.value = p.id;
-                opt.textContent = `${p.name} - ${p.ancestry}`;
-                sel.appendChild(opt);
-            });
-
-            const checks = document.getElementById('patient-checks');
-            patients.forEach(p => {
-                const div = document.createElement('div');
-                div.className = 'flex items-center gap-2 p-2 border rounded';
-                div.innerHTML = `<input type="checkbox" id="c-${p.id}" value="${p.id}" class="w-4 h-4"><label for="c-${p.id}" class="text-sm"><b>${p.name}</b> - ${p.ancestry}</label>`;
-                checks.appendChild(div);
+                const label = document.createElement('label');
+                label.className = 'flex items-center gap-2 p-3 border rounded cursor-pointer hover:bg-blue-50';
+                label.innerHTML = `<input type="checkbox" value="${p.id}" class="w-5 h-5"><span class="flex-1"><strong>${p.name}</strong> (${p.id}) - ${p.age}y, ${p.ancestry}</span>`;
+                div.appendChild(label);
             });
         };
 
-        function showMode(mode) {
-            ['upload-mode', 'single-mode', 'batch-mode'].forEach(m => document.getElementById(m).classList.add('hidden'));
-            document.getElementById(mode + '-mode').classList.remove('hidden');
-        }
-
-        function selectAll() {
-            document.querySelectorAll('#patient-checks input').forEach(cb => cb.checked = true);
+        function switchTab(tab) {
+            if (tab === 'database') {
+                document.getElementById('mode-database').classList.remove('hidden');
+                document.getElementById('mode-upload').classList.add('hidden');
+                document.getElementById('tab-database').className = 'px-6 py-3 rounded-lg font-bold bg-blue-600 text-white';
+                document.getElementById('tab-upload').className = 'px-6 py-3 rounded-lg font-bold bg-gray-200 text-gray-700';
+            } else {
+                document.getElementById('mode-database').classList.add('hidden');
+                document.getElementById('mode-upload').classList.remove('hidden');
+                document.getElementById('tab-database').className = 'px-6 py-3 rounded-lg font-bold bg-gray-200 text-gray-700';
+                document.getElementById('tab-upload').className = 'px-6 py-3 rounded-lg font-bold bg-blue-600 text-white';
+            }
         }
 
         function downloadSample() {
-            const vcf = `##fileformat=VCFv4.2\n#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\nchr17\t43044295\t.\tT\tC\t55.0\tPASS\tGENE=BRCA1;CONSEQUENCE=missense_variant;AF=0.0001`;
+            const vcf = `##fileformat=VCFv4.2
+##reference=GRCh38
+#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO
+chr17\t43044295\t.\tT\tC\t55.0\tPASS\tGENE=BRCA1;CONSEQUENCE=missense_variant;AF=0.0001
+chr13\t32315474\t.\tG\tT\t48.0\tPASS\tGENE=BRCA2;CONSEQUENCE=frameshift_variant;AF=0.0001
+chr7\t55242464\t.\tG\tA\t60.0\tPASS\tGENE=EGFR;CONSEQUENCE=missense_variant;AF=0.001
+chr2\t67890\t.\tC\tT\t45.0\tPASS\tGENE=TP53;CONSEQUENCE=nonsense_variant;AF=0.0002`;
             const blob = new Blob([vcf], {type: 'text/plain'});
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = 'sample.vcf';
+            a.download = 'sample_patient.vcf';
             a.click();
         }
 
         async function analyzeUpload() {
-            const file = document.getElementById('vcf-upload').files[0];
-            if (!file) { alert('Select a file'); return; }
+            const file = document.getElementById('vcf-file').files[0];
+            const name = document.getElementById('upload-name').value;
+            const id = document.getElementById('upload-id').value;
+            const ancestry = document.getElementById('upload-ancestry').value;
+
+            if (!file) { alert('Select VCF file'); return; }
+            if (!name || !id) { alert('Enter patient name and ID'); return; }
 
             const formData = new FormData();
             formData.append('file', file);
-            document.getElementById('loading').classList.remove('hidden');
 
             try {
-                const r1 = await fetch(`${API}/api/upload-vcf`, {method: 'POST', body: formData});
+                const r1 = await fetch('http://localhost:5000/api/upload-vcf', {method: 'POST', body: formData});
                 const d1 = await r1.json();
-                const r2 = await fetch(`${API}/api/analyze-batch`, {
+                
+                if (!d1.success) throw new Error(d1.error);
+
+                const r2 = await fetch('http://localhost:5000/api/analyze-batch', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({variants: d1.variants})
                 });
                 const d2 = await r2.json();
-                document.getElementById('loading').classList.add('hidden');
-                displayResults(d2, 1, '0.5', [{id: 'UP-001', name: document.getElementById('patient-name').value || 'Upload', age: '?', ancestry: 'Unknown', indication: 'VCF Upload'}]);
-            } catch (e) {
-                document.getElementById('loading').classList.add('hidden');
+                
+                const newPatient = {id: id, name: name, age: '?', ancestry: ancestry || 'Unknown', indication: 'Uploaded VCF'};
+                displayUploadResult(d2, newPatient);
+            } catch(e) {
                 alert('Error: ' + e.message);
             }
         }
 
-        async function analyzeSingle() {
-            const id = document.getElementById('patient-select').value;
-            if (!id) { alert('Select a patient'); return; }
-
-            document.getElementById('loading').classList.remove('hidden');
+        async function analyze() {
+            const selected = Array.from(document.querySelectorAll('#patients input:checked')).map(c => c.value);
+            if (!selected.length) { alert('Select at least one patient'); return; }
 
             try {
-                const r1 = await fetch(`${API}/api/sample-data`);
+                const r1 = await fetch('http://localhost:5000/api/sample-data');
                 const d1 = await r1.json();
-                const r2 = await fetch(`${API}/api/analyze-batch`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({variants: d1.sample_variants.slice(0, 5)})
-                });
-                const d2 = await r2.json();
-                document.getElementById('loading').classList.add('hidden');
-                displayResults(d2, 1, '0.5', [patients.find(p => p.id === id)]);
-            } catch (e) {
-                document.getElementById('loading').classList.add('hidden');
-                alert('Error: ' + e.message);
-            }
-        }
-
-        async function analyzeBatch() {
-            const ids = Array.from(document.querySelectorAll('#patient-checks input:checked')).map(cb => cb.value);
-            if (ids.length === 0) { alert('Select patients'); return; }
-
-            document.getElementById('loading').classList.remove('hidden');
-            const start = Date.now();
-
-            try {
-                const r1 = await fetch(`${API}/api/sample-data`);
-                const d1 = await r1.json();
-                const r2 = await fetch(`${API}/api/analyze-batch`, {
+                
+                const r2 = await fetch('http://localhost:5000/api/analyze-batch', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({variants: d1.sample_variants})
                 });
                 const d2 = await r2.json();
-                const time = ((Date.now() - start) / 1000).toFixed(2);
-                document.getElementById('loading').classList.add('hidden');
-                displayResults(d2, ids.length, time, patients.filter(p => ids.includes(p.id)));
-            } catch (e) {
-                document.getElementById('loading').classList.add('hidden');
-                alert('Error: ' + e.message);
+                
+                display(d2, selected);
+            } catch(e) {
+                alert('Error: ' + e.message + '\n\nMake sure API is running!');
             }
         }
 
-        function displayResults(data, count, time, pts) {
-            const anns = data.annotations;
-            const perPatient = Math.ceil(anns.length / count);
-            const pathCount = anns.filter(a => a.ml_classification.classification.includes('Pathogenic')).length;
-            const therapyCount = anns.filter(a => a.pharmacogenomics.drugs && a.pharmacogenomics.drugs.length > 0 && a.pharmacogenomics.drugs[0] !== 'Clinical trial consideration').length;
-
-            document.getElementById('stat-patients').textContent = count;
-            document.getElementById('stat-pathogenic').textContent = pathCount;
-            document.getElementById('stat-therapies').textContent = therapyCount;
-            document.getElementById('stat-time').textContent = time + 's';
-            document.getElementById('stats').classList.remove('hidden');
-
+        function display(d, ids) {
+            const anns = d.annotations;
+            const perPt = Math.ceil(anns.length / ids.length);
+            
             allData = [];
-            for (let i = 0; i < count; i++) {
-                const pVars = anns.slice(i * perPatient, (i + 1) * perPatient);
-                const path = pVars.filter(a => a.ml_classification.classification.includes('Pathogenic'));
+            let html = '<div class="bg-white p-6 rounded-lg shadow mb-4"><h2 class="text-2xl font-bold">Analysis Results: ' + ids.length + ' Patients</h2></div><div class="space-y-4">';
+            
+            for (let i = 0; i < ids.length; i++) {
+                const p = patients.find(x => x.id === ids[i]);
+                const vars = anns.slice(i * perPt, (i + 1) * perPt);
+                const path = vars.filter(v => v.ml_classification.classification.includes('Pathogenic'));
                 
-                const treats = new Map();
-                path.forEach(a => {
-                    if (a.pharmacogenomics.drugs && a.pharmacogenomics.drugs.length > 0 && a.pharmacogenomics.drugs[0] !== 'Clinical trial consideration') {
-                        treats.set(a.variant.gene, {drugs: a.pharmacogenomics.drugs, indication: a.pharmacogenomics.indication});
-                    }
-                });
-
-                const diseases = new Set();
-                path.forEach(a => {
-                    const d = a.disease_association.diseases[0];
-                    if (d && d !== 'Unknown/Not in database') diseases.add(d);
-                });
-
-                allData.push({patient: pts[i], variants: pVars, pathCount: path.length, treatments: treats, diseases: Array.from(diseases)});
-            }
-
-            let html = '<div class="space-y-6">';
-
-            allData.forEach((r, idx) => {
-                const priority = r.pathCount > 0 ? 'border-red-400 bg-red-50' : 'border-gray-300 bg-white';
-                const badge = r.pathCount > 0 ? '<span class="bg-red-600 text-white px-3 py-1 rounded-full text-xs font-bold">HIGH PRIORITY</span>' : '<span class="bg-green-600 text-white px-3 py-1 rounded-full text-xs font-bold">NEGATIVE</span>';
-
+                allData.push({p: p, vars: vars});
+                
                 html += `
-                    <div class="border-2 ${priority} rounded-lg shadow-lg p-6">
-                        <div class="flex justify-between mb-4">
+                    <div class="bg-white border-2 ${path.length > 0 ? 'border-red-400 bg-red-50' : 'border-gray-300'} rounded-lg p-6 shadow">
+                        <div class="flex justify-between mb-3">
                             <div>
-                                <h3 class="text-2xl font-bold">${r.patient.name}</h3>
-                                <p class="text-sm text-gray-600">${r.patient.id} | ${r.patient.age}y | ${r.patient.ancestry}</p>
+                                <h3 class="text-2xl font-bold">${p.name}</h3>
+                                <p class="text-sm text-gray-600">${p.id} | ${p.age}y | ${p.ancestry}</p>
+                                <p class="text-sm text-gray-600">${p.indication}</p>
                             </div>
-                            ${badge}
+                            <span class="px-3 py-1 rounded-full text-sm font-bold ${path.length > 0 ? 'bg-red-600 text-white' : 'bg-green-600 text-white'}">
+                                ${path.length > 0 ? '⚠️ HIGH PRIORITY' : '✓ NEGATIVE'}
+                            </span>
                         </div>
-
+                        
                         <div class="grid grid-cols-4 gap-3 mb-4">
-                            <div class="bg-white p-3 rounded border"><p class="text-xs">Variants</p><p class="text-2xl font-bold">${r.variants.length}</p></div>
-                            <div class="bg-white p-3 rounded border"><p class="text-xs">Pathogenic</p><p class="text-2xl font-bold text-red-600">${r.pathCount}</p></div>
-                            <div class="bg-white p-3 rounded border"><p class="text-xs">Therapies</p><p class="text-2xl font-bold text-green-600">${r.treatments.size}</p></div>
-                            <div class="bg-white p-3 rounded border"><p class="text-xs">Time</p><p class="text-2xl font-bold text-blue-600">${(parseFloat(time)/count).toFixed(2)}s</p></div>
+                            <div class="bg-white p-3 rounded border-2"><p class="text-xs text-gray-600">Variants</p><p class="text-2xl font-bold">${vars.length}</p></div>
+                            <div class="bg-white p-3 rounded border-2"><p class="text-xs text-gray-600">Pathogenic</p><p class="text-2xl font-bold text-red-600">${path.length}</p></div>
+                            <div class="bg-white p-3 rounded border-2"><p class="text-xs text-gray-600">Therapies</p><p class="text-2xl font-bold text-green-600">${vars.filter(v => v.pharmacogenomics.drugs.length > 0).length}</p></div>
+                            <div class="bg-white p-3 rounded border-2"><p class="text-xs text-gray-600">Time</p><p class="text-2xl font-bold text-blue-600">0.5s</p></div>
                         </div>
 
-                        ${r.diseases.length > 0 ? `
-                            <div class="bg-white p-4 rounded border-2 border-red-300 mb-3">
-                                <p class="font-bold text-red-800 mb-2">🩺 Disease Risk:</p>
-                                ${r.diseases.map(d => `<p class="text-sm text-red-700">• ${d}</p>`).join('')}
+                        ${path.length > 0 ? `
+                            <div class="bg-white p-4 rounded-lg border-2 border-red-300 mb-3">
+                                <p class="font-bold text-red-800 mb-2">🩺 Disease Risks Identified:</p>
+                                ${path.map(v => `<p class="text-sm text-red-700">• ${v.disease_association.diseases[0]}</p>`).join('')}
                             </div>
                         ` : ''}
 
-                        ${r.treatments.size > 0 ? `
-                            <div class="bg-white p-4 rounded border-2 border-green-300 mb-3">
-                                <p class="font-bold text-green-800 mb-2">💊 Precision Therapies:</p>
-                                ${Array.from(r.treatments).map(([g, t]) => `<p class="text-sm"><strong>${g}:</strong> ${t.drugs.join(', ')}</p>`).join('')}
+                        ${path.filter(v => v.pharmacogenomics.drugs.length > 0 && v.pharmacogenomics.drugs[0] !== 'Clinical trial consideration').length > 0 ? `
+                            <div class="bg-white p-4 rounded-lg border-2 border-green-300 mb-3">
+                                <p class="font-bold text-green-800 mb-2">💊 Precision Medicine Therapies:</p>
+                                ${path.filter(v => v.pharmacogenomics.drugs.length > 0).map(v => `<p class="text-sm text-green-900"><strong>${v.variant.gene}:</strong> ${v.pharmacogenomics.drugs.join(', ')}</p>`).join('')}
                             </div>
                         ` : ''}
 
-                        <details class="bg-white p-4 rounded border mb-3">
-                            <summary class="font-bold cursor-pointer">📊 All ${r.variants.length} Variants</summary>
+                        <details class="bg-white p-4 rounded-lg border-2 mb-3">
+                            <summary class="font-bold cursor-pointer hover:text-blue-600">📊 View All ${vars.length} Variants</summary>
                             <div class="mt-3 space-y-2 max-h-64 overflow-y-auto">
-                                ${r.variants.map(v => {
+                                ${vars.map(v => {
                                     const c = v.ml_classification.classification;
                                     let col = 'bg-gray-100';
                                     if (c === 'Pathogenic') col = 'bg-red-100 border-red-300';
                                     else if (c === 'Likely Pathogenic') col = 'bg-orange-100 border-orange-300';
-                                    return `<div class="${col} border p-3 rounded text-sm"><div class="flex justify-between"><b>${v.variant.gene}</b><span>${c}</span></div><p class="text-xs">${v.variant.id}</p></div>`;
+                                    return `<div class="${col} border-2 p-3 rounded"><div class="flex justify-between"><strong>${v.variant.gene}</strong><span class="text-sm">${c}</span></div><p class="text-xs text-gray-600 mt-1">${v.variant.id} | ${v.variant.consequence}</p></div>`;
                                 }).join('')}
                             </div>
                         </details>
 
-                        <button onclick="showReport(${idx})" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold">📋 Full Report</button>
+                        <button onclick="showReport(${i})" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold shadow hover:bg-blue-700">
+                            📋 Generate Full Clinical Report
+                        </button>
                     </div>
                 `;
-            });
+            }
+            
+            document.getElementById('results').innerHTML = html + '</div>';
+        }
 
-            html += '</div>';
+        function displayUploadResult(d, patient) {
+            const anns = d.annotations;
+            const path = anns.filter(v => v.ml_classification.classification.includes('Pathogenic'));
+            
+            allData = [{p: patient, vars: anns}];
+            
+            let html = `
+                <div class="bg-white p-6 rounded-lg shadow mb-4">
+                    <h2 class="text-2xl font-bold text-green-700">✓ Upload Successful</h2>
+                    <p class="text-gray-600">Analyzed uploaded VCF for ${patient.name}</p>
+                </div>
+                <div class="bg-white border-2 ${path.length > 0 ? 'border-red-400 bg-red-50' : 'border-gray-300'} rounded-lg p-6 shadow">
+                    <div class="flex justify-between mb-3">
+                        <div>
+                            <h3 class="text-2xl font-bold">${patient.name}</h3>
+                            <p class="text-sm text-gray-600">${patient.id} | Age: ${patient.age} | Ancestry: ${patient.ancestry}</p>
+                            <p class="text-sm text-gray-600">${patient.indication}</p>
+                        </div>
+                        <span class="px-3 py-1 rounded-full text-sm font-bold ${path.length > 0 ? 'bg-red-600 text-white' : 'bg-green-600 text-white'}">
+                            ${path.length > 0 ? '⚠️ HIGH PRIORITY' : '✓ NEGATIVE'}
+                        </span>
+                    </div>
+                    
+                    <div class="grid grid-cols-3 gap-3 mb-4">
+                        <div class="bg-white p-3 rounded border-2"><p class="text-xs">Variants Found</p><p class="text-3xl font-bold">${anns.length}</p></div>
+                        <div class="bg-white p-3 rounded border-2"><p class="text-xs">Pathogenic</p><p class="text-3xl font-bold text-red-600">${path.length}</p></div>
+                        <div class="bg-white p-3 rounded border-2"><p class="text-xs">Therapies</p><p class="text-3xl font-bold text-green-600">${anns.filter(v => v.pharmacogenomics.drugs.length > 0).length}</p></div>
+                    </div>
+
+                    ${path.length > 0 ? `
+                        <div class="bg-white p-4 rounded border-2 border-red-300 mb-3">
+                            <p class="font-bold text-red-800 mb-2">🩺 Disease Risks:</p>
+                            ${path.map(v => `<p class="text-sm text-red-700">• ${v.disease_association.diseases[0]}</p>`).join('')}
+                        </div>
+                        <div class="bg-white p-4 rounded border-2 border-green-300 mb-3">
+                            <p class="font-bold text-green-800 mb-2">💊 Available Therapies:</p>
+                            ${path.filter(v => v.pharmacogenomics.drugs.length > 0).map(v => `<p class="text-sm"><strong>${v.variant.gene}:</strong> ${v.pharmacogenomics.drugs.join(', ')}</p>`).join('')}
+                        </div>
+                    ` : ''}
+
+                    <details class="bg-white p-4 rounded border-2 mb-3">
+                        <summary class="font-bold cursor-pointer">📊 All ${anns.length} Variants</summary>
+                        <div class="mt-3 space-y-2 max-h-64 overflow-y-auto">
+                            ${anns.map(v => `<div class="bg-gray-100 border p-3 rounded text-sm"><strong>${v.variant.gene}</strong> - ${v.ml_classification.classification}</div>`).join('')}
+                        </div>
+                    </details>
+
+                    <button onclick="showReport(0)" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold">📋 Full Report</button>
+                </div>
+            `;
+            
             document.getElementById('results').innerHTML = html;
+        }
+
+        async function analyzeUpload() {
+            const file = document.getElementById('vcf-file').files[0];
+            const name = document.getElementById('upload-name').value.trim();
+            const id = document.getElementById('upload-id').value.trim();
+            const ancestry = document.getElementById('upload-ancestry').value;
+
+            if (!file) { alert('Please select a VCF file'); return; }
+            if (!name) { alert('Please enter patient name'); return; }
+            if (!id) { alert('Please enter patient ID'); return; }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const r1 = await fetch('http://localhost:5000/api/upload-vcf', {method: 'POST', body: formData});
+                const d1 = await r1.json();
+                
+                if (!d1.success) throw new Error(d1.error);
+
+                const r2 = await fetch('http://localhost:5000/api/analyze-batch', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({variants: d1.variants})
+                });
+                const d2 = await r2.json();
+                
+                const newPatient = {id: id, name: name, age: '?', ancestry: ancestry || 'Not specified', indication: 'Uploaded VCF'};
+                displayUploadResult(d2, newPatient);
+            } catch(e) {
+                alert('Upload Error: ' + e.message);
+            }
+        }
+
+        async function analyze() {
+            const selected = Array.from(document.querySelectorAll('#patients input:checked')).map(c => c.value);
+            if (!selected.length) { alert('Select at least one patient'); return; }
+
+            try {
+                const r1 = await fetch('http://localhost:5000/api/sample-data');
+                const d1 = await r1.json();
+                
+                const r2 = await fetch('http://localhost:5000/api/analyze-batch', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({variants: d1.sample_variants})
+                });
+                const d2 = await r2.json();
+                
+                display(d2, selected);
+            } catch(e) {
+                alert('Error: ' + e.message);
+            }
         }
 
         function showReport(idx) {
             const r = allData[idx];
             let html = `
-                <div class="mb-6 bg-gray-50 p-4 rounded">
-                    <h3 class="text-2xl font-bold mb-3">Patient</h3>
-                    <p><strong>Name:</strong> ${r.patient.name}</p>
-                    <p><strong>Ancestry:</strong> ${r.patient.ancestry}</p>
+                <div class="mb-6 bg-gray-100 p-4 rounded">
+                    <h3 class="text-2xl font-bold mb-3">Patient Information</h3>
+                    <p><strong>Name:</strong> ${r.p.name}</p>
+                    <p><strong>ID:</strong> ${r.p.id}</p>
+                    <p><strong>Age:</strong> ${r.p.age}</p>
+                    <p><strong>Ancestry:</strong> ${r.p.ancestry}</p>
+                    <p><strong>Indication:</strong> ${r.p.indication}</p>
                 </div>
-                <div><h3 class="text-2xl font-bold mb-3">All Variants</h3><div class="space-y-3">
+                <div class="mb-6">
+                    <h3 class="text-2xl font-bold mb-3">Complete Variant Analysis</h3>
+                    <div class="space-y-3">
             `;
             
-            r.variants.forEach(v => {
+            r.vars.forEach(v => {
                 const c = v.ml_classification.classification;
                 let col = 'bg-gray-50';
-                if (c === 'Pathogenic') col = 'bg-red-50';
+                if (c === 'Pathogenic') col = 'bg-red-50 border-red-400';
+                else if (c === 'Likely Pathogenic') col = 'bg-orange-50 border-orange-400';
                 
                 html += `
-                    <div class="${col} border-2 p-4 rounded">
-                        <div class="flex justify-between mb-2"><b class="text-xl">${v.variant.gene}</b><span>${c}</span></div>
-                        <p class="text-sm">${v.variant.id}</p>
-                        <p class="text-sm">${v.variant.consequence} | AF: ${v.variant.allele_frequency.toFixed(4)}</p>
-                        <p class="text-sm text-gray-700 mt-2">${v.ml_classification.clinical_significance}</p>
-                        ${v.pharmacogenomics.drugs.length > 0 ? `<div class="mt-2 bg-green-100 p-3 rounded"><p class="font-semibold text-green-800">💊 ${v.pharmacogenomics.drugs.join(', ')}</p></div>` : ''}
+                    <div class="${col} border-2 p-4 rounded-lg">
+                        <div class="flex justify-between mb-2">
+                            <strong class="text-xl">${v.variant.gene}</strong>
+                            <span class="font-semibold">${c}</span>
+                        </div>
+                        <p class="text-sm text-gray-700">${v.variant.id}</p>
+                        <p class="text-sm text-gray-700">${v.variant.consequence} | Allele Freq: ${v.variant.allele_frequency.toFixed(4)} | Quality: ${v.variant.quality}</p>
+                        <p class="text-sm text-gray-800 mt-2"><strong>Clinical Significance:</strong> ${v.ml_classification.clinical_significance}</p>
+                        ${v.pharmacogenomics.drugs.length > 0 && v.pharmacogenomics.drugs[0] !== 'Clinical trial consideration' ? `
+                            <div class="mt-3 bg-green-100 p-3 rounded border border-green-400">
+                                <p class="font-semibold text-green-800">💊 FDA-Approved Therapies:</p>
+                                <p class="text-green-900">${v.pharmacogenomics.drugs.join(', ')}</p>
+                                <p class="text-xs text-green-700 mt-1">${v.pharmacogenomics.indication}</p>
+                            </div>
+                        ` : ''}
                     </div>
                 `;
             });
