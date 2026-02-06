@@ -1,0 +1,26 @@
+{
+  "logistic_regression": {
+    "purpose": "Baseline reference",
+    "auc": 1.0,
+    "accuracy": 1.0
+  },
+  "random_forest": {
+    "purpose": "Primary production model",
+    "auc": 1.0,
+    "accuracy": 1.0,
+    "sensitivity": 1.0,
+    "specificity": 1.0,
+    "feature_importance": {
+      "Consequence": 0.4348774898029259,
+      "Allele Freq": 0.47226474443175764,
+      "Quality": 0.07910027227095227,
+      "Coding": 0.013741495625284287,
+      "Gene Constraint": 1.5997869079963126e-05
+    }
+  },
+  "xgboost": {
+    "purpose": "Performance benchmark",
+    "auc": 1.0,
+    "accuracy": 1.0
+  }
+}

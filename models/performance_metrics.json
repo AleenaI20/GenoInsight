@@ -1,0 +1,13 @@
+{
+  "auc_roc": 1.0,
+  "sensitivity": 1.0,
+  "specificity": 1.0,
+  "accuracy": 1.0,
+  "feature_importance": {
+    "Consequence": 0.34204921916120784,
+    "Allele Freq": 0.33952219490498176,
+    "Quality": 0.012694792225607564,
+    "Coding": 0.028519715434544915,
+    "Gene Constraint": 0.2772140782736579
+  }
+}
