@@ -32,8 +32,14 @@ UPLOAD_FOLDER = "uploads"
 ALLOWED_EXTENSIONS = {"vcf", "txt"}
 MAX_BATCH_SIZE = 1000  # safety limit
 
+<<<<<<< Updated upstream
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16 MB
+=======
+# Initialize models
+ensemble_classifier = EnsembleVariantClassifier()
+clinical_annotator = ClinicalAnnotator()
+>>>>>>> Stashed changes
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
@@ -75,6 +81,7 @@ def health_check():
 # ---------------------------------------------------------------------
 @app.route("/api/upload-vcf", methods=["POST"])
 def upload_vcf():
+<<<<<<< Updated upstream
     if "file" not in request.files:
         return jsonify({"error": "No file provided"}), 400
 
@@ -104,6 +111,37 @@ def upload_vcf():
 
     except Exception as e:
         return jsonify({"error": f"VCF parsing failed: {str(e)}"}), 500
+=======
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file provided'}), 400
+    
+    file = request.files['file']
+    
+    if file.filename == '':
+        return jsonify({'error': 'No file selected'}), 400
+    
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+        
+        try:
+            parser = VariantParser(filepath)
+            variants = parser.parse_vcf()
+            filtered_variants = parser.filter_variants()
+            
+            return jsonify({
+                'success': True,
+                'total_variants': len(variants),
+                'filtered_variants': len(filtered_variants),
+                'variants': filtered_variants
+            }), 200
+            
+        except Exception as e:
+            return jsonify({'error': f'Error parsing VCF: {str(e)}'}), 500
+    
+    return jsonify({'error': 'Invalid file type'}), 400
+>>>>>>> Stashed changes
 
 
 # ---------------------------------------------------------------------
@@ -195,6 +233,7 @@ def analyze_batch():
 # ---------------------------------------------------------------------
 @app.route("/api/sample-data", methods=["GET"])
 def get_sample_data():
+<<<<<<< Updated upstream
     return jsonify({
         "success": True,
         "sample_variants": [
@@ -245,3 +284,60 @@ if __name__ == "__main__":
     print("Starting GenoInsight API v2.0.1")
     app.run(host="0.0.0.0", port=5000, debug=True)
 
+=======
+    """Return variants from actual sample VCF file (49 variants)"""
+    try:
+        parser = VariantParser('data/sample_variants.vcf')
+        variants = parser.parse_vcf()
+        filtered = parser.filter_variants(min_quality=30.0, max_allele_freq=0.5)
+        
+        return jsonify({
+            'success': True,
+            'sample_variants': filtered,
+            'total_variants': len(filtered),
+            'genes_covered': len(set(v['gene'] for v in filtered))
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'error': f'Error loading sample data: {str(e)}'
+        }), 500
+
+
+@app.route('/api/model-info', methods=['GET'])
+def model_info():
+    """Return information about available models"""
+    return jsonify({
+        'available_models': {
+            'random_forest': 'Primary production model - explainable and robust',
+            'logistic_regression': 'Baseline reference - simple and interpretable',
+            'xgboost': 'Performance benchmark - high accuracy'
+        },
+        'default_model': 'random_forest',
+        'ensemble_mode': 'Averages predictions from all three models',
+        'metrics': ensemble_classifier.metrics if ensemble_classifier.metrics else 'Not yet trained'
+    }), 200
+
+
+if __name__ == '__main__':
+    print("Initializing GenoInsight API v2.0...")
+    print("Training ensemble models...")
+    
+    # Train all models on startup
+    try:
+        ensemble_classifier.train_all_models()
+        print("\n✓ All models ready!")
+    except Exception as e:
+        print(f"Warning: Model training failed: {e}")
+        print("Models will train on first prediction request")
+    
+    print("\nStarting API server...")
+    print("Endpoints available:")
+    print("  GET  /api/health")
+    print("  GET  /api/sample-data (49 variants)")
+    print("  GET  /api/model-info")
+    print("  POST /api/upload-vcf")
+    print("  POST /api/analyze-variant")
+    print("  POST /api/analyze-batch")
+    
+    app.run(debug=True, host='0.0.0.0', port=5000)
+>>>>>>> Stashed changes
