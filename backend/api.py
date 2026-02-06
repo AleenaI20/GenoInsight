@@ -1,184 +1,247 @@
-﻿"""
-Flask API for GenoInsight Platform - Using Ensemble Models
+"""
+Flask API for GenoInsight Platform
+---------------------------------
+AI-powered genomic variant interpretation using ensemble ML models.
+
+DISCLAIMER:
+This system is for research and educational purposes only.
+Not intended for clinical diagnosis or treatment decisions.
 """
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import os
-import json
-import sys
 from werkzeug.utils import secure_filename
+import os
+import sys
 
+# Local imports
 sys.path.insert(0, os.path.dirname(__file__))
 
 from variant_parser import VariantParser
 from ensemble_models import EnsembleVariantClassifier
 from clinical_annotator import ClinicalAnnotator
 
+
+# ---------------------------------------------------------------------
+# App Configuration
+# ---------------------------------------------------------------------
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
-UPLOAD_FOLDER = 'uploads'
-ALLOWED_EXTENSIONS = {'vcf', 'txt'}
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+UPLOAD_FOLDER = "uploads"
+ALLOWED_EXTENSIONS = {"vcf", "txt"}
+MAX_BATCH_SIZE = 1000  # safety limit
 
-# Use ensemble classifier
-ensemble_classifier = EnsembleVariantClassifier()
-clinical_annotator = ClinicalAnnotator()
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16 MB
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+# ---------------------------------------------------------------------
+# Initialize Models
+# ---------------------------------------------------------------------
+ensemble_classifier = EnsembleVariantClassifier()
+clinical_annotator = ClinicalAnnotator()
 
 
-@app.route('/api/health', methods=['GET'])
+# ---------------------------------------------------------------------
+# Utility Functions
+# ---------------------------------------------------------------------
+def allowed_file(filename: str) -> bool:
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def validate_variant_payload(variant: dict) -> bool:
+    required_keys = {"id", "gene", "consequence"}
+    return isinstance(variant, dict) and required_keys.issubset(variant.keys())
+
+
+# ---------------------------------------------------------------------
+# Health Check
+# ---------------------------------------------------------------------
+@app.route("/api/health", methods=["GET"])
 def health_check():
     return jsonify({
-        'status': 'healthy',
-        'service': 'GenoInsight API',
-        'version': '2.0.0',
-        'models': ['random_forest', 'logistic_regression', 'xgboost']
+        "status": "healthy",
+        "service": "GenoInsight API",
+        "version": "2.0.1",
+        "models": ["random_forest", "logistic_regression", "xgboost"],
+        "ensemble_ready": ensemble_classifier.is_trained
     }), 200
 
 
-@app.route('/api/upload-vcf', methods=['POST'])
+# ---------------------------------------------------------------------
+# VCF Upload & Parsing
+# ---------------------------------------------------------------------
+@app.route("/api/upload-vcf", methods=["POST"])
 def upload_vcf():
-    if 'file' not in request.files:
-        return jsonify({'error': 'No file provided'}), 400
-    
-    file = request.files['file']
-    
-    if file.filename == '':
-        return jsonify({'error': 'No file selected'}), 400
-    
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
-        
-        try:
-            parser = VariantParser(filepath)
-            variants = parser.parse_vcf()
-            filtered_variants = parser.filter_variants()
-            
-            return jsonify({
-                'success': True,
-                'total_variants': len(variants),
-                'filtered_variants': len(filtered_variants),
-                'variants': filtered_variants[:50]
-            }), 200
-            
-        except Exception as e:
-            return jsonify({'error': f'Error parsing VCF: {str(e)}'}), 500
-    
-    return jsonify({'error': 'Invalid file type'}), 400
+    if "file" not in request.files:
+        return jsonify({"error": "No file provided"}), 400
+
+    file = request.files["file"]
+
+    if file.filename == "":
+        return jsonify({"error": "No file selected"}), 400
+
+    if not allowed_file(file.filename):
+        return jsonify({"error": "Invalid file type"}), 400
+
+    filename = secure_filename(file.filename)
+    filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+    file.save(filepath)
+
+    try:
+        parser = VariantParser(filepath)
+        variants = parser.parse_vcf()
+        filtered_variants = parser.filter_variants()
+
+        return jsonify({
+            "success": True,
+            "total_variants": len(variants),
+            "filtered_variants": len(filtered_variants),
+            "preview": filtered_variants[:50]
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": f"VCF parsing failed: {str(e)}"}), 500
 
 
-@app.route('/api/analyze-variant', methods=['POST'])
+# ---------------------------------------------------------------------
+# Single Variant Analysis
+# ---------------------------------------------------------------------
+@app.route("/api/analyze-variant", methods=["POST"])
 def analyze_variant():
     data = request.get_json()
-    
-    if not data or 'variant' not in data:
-        return jsonify({'error': 'No variant data provided'}), 400
-    
-    variant = data['variant']
-    use_ensemble = data.get('use_ensemble', False)
-    
+
+    if not data or "variant" not in data:
+        return jsonify({"error": "No variant data provided"}), 400
+
+    variant = data["variant"]
+    use_ensemble = bool(data.get("use_ensemble", True))
+
+    if not validate_variant_payload(variant):
+        return jsonify({"error": "Invalid variant format"}), 400
+
     try:
-        ml_prediction = ensemble_classifier.predict_pathogenicity(variant, use_ensemble=use_ensemble)
-        annotation = clinical_annotator.annotate_variant(variant, ml_prediction)
-        
+        prediction = ensemble_classifier.predict_pathogenicity(
+            variant, use_ensemble=use_ensemble
+        )
+
+        annotation = clinical_annotator.annotate_variant(
+            variant, prediction
+        )
+
         return jsonify({
-            'success': True,
-            'analysis': annotation
+            "success": True,
+            "analysis": annotation,
+            "model_mode": "ensemble" if use_ensemble else "single"
         }), 200
-        
+
     except Exception as e:
-        return jsonify({'error': f'Error: {str(e)}'}), 500
+        return jsonify({"error": f"Analysis failed: {str(e)}"}), 500
 
 
-@app.route('/api/analyze-batch', methods=['POST'])
+# ---------------------------------------------------------------------
+# Batch Variant Analysis
+# ---------------------------------------------------------------------
+@app.route("/api/analyze-batch", methods=["POST"])
 def analyze_batch():
     data = request.get_json()
-    
-    if not data or 'variants' not in data:
-        return jsonify({'error': 'No variants provided'}), 400
-    
-    variants = data['variants']
-    use_ensemble = data.get('use_ensemble', False)
-    
+
+    if not data or "variants" not in data:
+        return jsonify({"error": "No variants provided"}), 400
+
+    variants = data["variants"]
+    use_ensemble = bool(data.get("use_ensemble", True))
+
+    if not isinstance(variants, list):
+        return jsonify({"error": "Variants must be a list"}), 400
+
+    if len(variants) > MAX_BATCH_SIZE:
+        return jsonify({"error": f"Batch size exceeds {MAX_BATCH_SIZE} variants"}), 400
+
     try:
         annotations = []
-        
+
         for variant in variants:
-            ml_prediction = ensemble_classifier.predict_pathogenicity(variant, use_ensemble=use_ensemble)
-            annotation = clinical_annotator.annotate_variant(variant, ml_prediction)
+            if not validate_variant_payload(variant):
+                continue
+
+            prediction = ensemble_classifier.predict_pathogenicity(
+                variant, use_ensemble=use_ensemble
+            )
+
+            annotation = clinical_annotator.annotate_variant(
+                variant, prediction
+            )
             annotations.append(annotation)
-        
-        clinical_report = clinical_annotator.generate_clinical_report(annotations)
-        
+
+        report = clinical_annotator.generate_clinical_report(annotations)
+
         return jsonify({
-            'success': True,
-            'total_analyzed': len(annotations),
-            'annotations': annotations,
-            'clinical_report': clinical_report
+            "success": True,
+            "total_analyzed": len(annotations),
+            "annotations": annotations,
+            "clinical_report": report,
+            "model_mode": "ensemble" if use_ensemble else "single"
         }), 200
-        
+
     except Exception as e:
-        return jsonify({'error': f'Error: {str(e)}'}), 500
+        return jsonify({"error": f"Batch analysis failed: {str(e)}"}), 500
 
 
-@app.route('/api/sample-data', methods=['GET'])
+# ---------------------------------------------------------------------
+# Sample Data Endpoint
+# ---------------------------------------------------------------------
+@app.route("/api/sample-data", methods=["GET"])
 def get_sample_data():
-    sample_variants = [
-        {'id': 'chr1:12345:A>G', 'gene': 'BRCA1', 'consequence': 'missense_variant', 'allele_frequency': 0.0001, 'quality': 50.0},
-        {'id': 'chr2:67890:C>T', 'gene': 'TP53', 'consequence': 'nonsense_variant', 'allele_frequency': 0.0002, 'quality': 45.0},
-        {'id': 'chr7:55242464:G>A', 'gene': 'EGFR', 'consequence': 'missense_variant', 'allele_frequency': 0.001, 'quality': 60.0},
-        {'id': 'chr17:43044295:T>C', 'gene': 'BRCA1', 'consequence': 'splice_site_variant', 'allele_frequency': 0.0003, 'quality': 55.0},
-        {'id': 'chr13:32315474:G>T', 'gene': 'BRCA2', 'consequence': 'frameshift_variant', 'allele_frequency': 0.0001, 'quality': 48.0},
-        {'id': 'chr12:25398285:C>G', 'gene': 'KRAS', 'consequence': 'missense_variant', 'allele_frequency': 0.0005, 'quality': 52.0},
-        {'id': 'chr10:89624227:T>A', 'gene': 'PTEN', 'consequence': 'frameshift_variant', 'allele_frequency': 0.0002, 'quality': 58.0},
-        {'id': 'chr11:108175438:G>C', 'gene': 'ATM', 'consequence': 'splice_site_variant', 'allele_frequency': 0.0004, 'quality': 47.0},
-        {'id': 'chr3:37050300:A>T', 'gene': 'MLH1', 'consequence': 'nonsense_variant', 'allele_frequency': 0.0001, 'quality': 53.0},
-        {'id': 'chr2:47641559:C>A', 'gene': 'MSH2', 'consequence': 'missense_variant', 'allele_frequency': 0.0003, 'quality': 49.0},
-        {'id': 'chr5:112162856:G>T', 'gene': 'APC', 'consequence': 'frameshift_variant', 'allele_frequency': 0.0002, 'quality': 56.0},
-        {'id': 'chr9:21971120:T>G', 'gene': 'CDKN2A', 'consequence': 'missense_variant', 'allele_frequency': 0.0006, 'quality': 51.0},
-        {'id': 'chr14:105246494:A>C', 'gene': 'AKT1', 'consequence': 'missense_variant', 'allele_frequency': 0.0004, 'quality': 54.0},
-        {'id': 'chr19:1220571:G>A', 'gene': 'STK11', 'consequence': 'nonsense_variant', 'allele_frequency': 0.0001, 'quality': 48.0},
-        {'id': 'chr6:117640000:C>T', 'gene': 'ROS1', 'consequence': 'splice_site_variant', 'allele_frequency': 0.0003, 'quality': 57.0},
-        {'id': 'chr4:55141055:A>G', 'gene': 'PDGFRA', 'consequence': 'missense_variant', 'allele_frequency': 0.0007, 'quality': 46.0},
-        {'id': 'chr15:90088702:G>A', 'gene': 'IDH2', 'consequence': 'missense_variant', 'allele_frequency': 0.0002, 'quality': 59.0},
-        {'id': 'chr1:115256529:T>C', 'gene': 'NRAS', 'consequence': 'missense_variant', 'allele_frequency': 0.0004, 'quality': 50.0},
-        {'id': 'chr17:7577548:C>T', 'gene': 'TP53', 'consequence': 'missense_variant', 'allele_frequency': 0.0001, 'quality': 55.0},
-        {'id': 'chr13:32912299:A>G', 'gene': 'BRCA2', 'consequence': 'missense_variant', 'allele_frequency': 0.0002, 'quality': 52.0}
-    ]
-    
-    return jsonify({'success': True, 'sample_variants': sample_variants}), 200
-
-
-@app.route('/api/model-info', methods=['GET'])
-def model_info():
-    """Return information about available models"""
     return jsonify({
-        'available_models': {
-            'random_forest': 'Primary production model - explainable and robust',
-            'logistic_regression': 'Baseline reference - simple and interpretable',
-            'xgboost': 'Performance benchmark - high accuracy'
-        },
-        'default_model': 'random_forest',
-        'ensemble_mode': 'Averages predictions from all three models',
-        'metrics': ensemble_classifier.metrics
+        "success": True,
+        "sample_variants": [
+            {
+                "id": "chr17:43044295:T>C",
+                "gene": "BRCA1",
+                "consequence": "missense_variant",
+                "cohort_allele_frequency": 0.0003,
+                "quality": 55.0
+            },
+            {
+                "id": "chr7:55242464:G>A",
+                "gene": "EGFR",
+                "consequence": "missense_variant",
+                "cohort_allele_frequency": 0.001,
+                "quality": 60.0
+            }
+        ]
     }), 200
 
 
-if __name__ == '__main__':
-    print("Initializing ensemble models...")
-    
-    # Train all models on startup
+# ---------------------------------------------------------------------
+# Model Metadata
+# ---------------------------------------------------------------------
+@app.route("/api/model-info", methods=["GET"])
+def model_info():
+    return jsonify({
+        "available_models": {
+            "random_forest": "Primary production model (explainable)",
+            "logistic_regression": "Baseline interpretable model",
+            "xgboost": "High-performance benchmark model"
+        },
+        "default_model": "random_forest",
+        "ensemble_strategy": "Mean probability aggregation",
+        "metrics": ensemble_classifier.metrics
+    }), 200
+
+
+# ---------------------------------------------------------------------
+# App Startup
+# ---------------------------------------------------------------------
+if __name__ == "__main__":
+    print("Initializing GenoInsight Ensemble Models...")
+
     ensemble_classifier.train_all_models()
-    
-    print("\nAll models ready!")
-    print("Starting GenoInsight API v2.0...")
-    app.run(debug=True, host='0.0.0.0', port=5000)
+
+    print("✓ All models trained successfully")
+    print("Starting GenoInsight API v2.0.1")
+    app.run(host="0.0.0.0", port=5000, debug=True)
+
