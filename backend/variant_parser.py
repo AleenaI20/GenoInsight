@@ -87,7 +87,7 @@ class VariantParser:
     
     def filter_variants(self, 
                        min_quality: float = 20.0,
-                       max_allele_freq: float = 0.01,
+                       max_allele_freq: float = 0.5,
                        pass_filter_only: bool = True) -> List[Dict[str, Any]]:
         """Filter variants based on quality criteria"""
         filtered = []
@@ -107,40 +107,33 @@ class VariantParser:
         return filtered
 
 
-def create_sample_vcf(output_path: str = 'data/sample_variants.vcf'):
-    """Create a sample VCF file for testing"""
-    
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    
-    with open(output_path, 'w', encoding='utf-8', newline='\n') as f:
-        f.write("##fileformat=VCFv4.2\n")
-        f.write("##reference=GRCh38\n")
-        f.write("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n")
-        f.write("chr1\t12345\t.\tA\tG\t50.0\tPASS\tGENE=BRCA1;CONSEQUENCE=missense_variant;AF=0.0001\n")
-        f.write("chr2\t67890\t.\tC\tT\t45.0\tPASS\tGENE=TP53;CONSEQUENCE=nonsense_variant;AF=0.0002\n")
-        f.write("chr7\t55242464\t.\tG\tA\t60.0\tPASS\tGENE=EGFR;CONSEQUENCE=missense_variant;AF=0.001\n")
-        f.write("chr17\t43044295\t.\tT\tC\t55.0\tPASS\tGENE=BRCA1;CONSEQUENCE=splice_site_variant;AF=0.0003\n")
-        f.write("chr13\t32315474\t.\tG\tT\t48.0\tPASS\tGENE=BRCA2;CONSEQUENCE=frameshift_variant;AF=0.0001\n")
-    
-    print(f"Sample VCF created at {output_path}")
-
-
 if __name__ == "__main__":
-    create_sample_vcf()
+    # Test with existing VCF - DON'T create new one
+    vcf_path = 'data/sample_variants.vcf'
     
-    parser = VariantParser('data/sample_variants.vcf')
-    variants = parser.parse_vcf()
-    
-    print(f"Parsed {len(variants)} variants")
-    if variants:
-        print("\nFirst variant:")
-        print(variants[0])
+    if os.path.exists(vcf_path):
+        print(f"Parsing {vcf_path}...")
+        parser = VariantParser(vcf_path)
+        variants = parser.parse_vcf()
         
-        filtered = parser.filter_variants(min_quality=45.0)
-        print(f"\n{len(filtered)} variants passed filters")
+        print(f"\n✓ Parsed {len(variants)} variants")
         
-        df = parser.to_dataframe()
-        print("\nVariants DataFrame:")
-        print(df[['id', 'gene', 'consequence', 'quality']])
+        if variants:
+            print("\nFirst 5 variants:")
+            for i, v in enumerate(variants[:5]):
+                print(f"  {i+1}. {v['gene']:10s} - {v['consequence']:25s} - AF: {v['allele_frequency']:.6f}")
+            
+            # Show gene distribution
+            genes = {}
+            for v in variants:
+                genes[v['gene']] = genes.get(v['gene'], 0) + 1
+            
+            print(f"\nGene distribution ({len(genes)} unique genes):")
+            for gene, count in sorted(genes.items(), key=lambda x: x[1], reverse=True)[:10]:
+                print(f"  {gene:10s}: {count} variants")
+            
+            # Filter
+            filtered = parser.filter_variants(min_quality=30.0)
+            print(f"\n✓ {len(filtered)} variants passed quality filters (Q > 30)")
     else:
-        print("No variants parsed. Check VCF file format.")
+        print(f"Error: {vcf_path} not found!")
