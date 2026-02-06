@@ -61,17 +61,28 @@ class EnsembleVariantClassifier:
         }
 
     # ------------------------------------------------------------------
+    # Property for API Health Check
+    # ------------------------------------------------------------------
+    @property
+    def is_trained(self) -> bool:
+        """Check if models are trained and ready"""
+        return self.rf_model is not None
+
+    # ------------------------------------------------------------------
     # Feature Engineering
     # ------------------------------------------------------------------
     def extract_features(self, variant: dict) -> dict:
         """
         Extract clinically interpretable features from a variant.
         """
+        # Handle both 'allele_frequency' and 'cohort_allele_frequency'
+        af = variant.get('allele_frequency') or variant.get('cohort_allele_frequency', 0.0)
+        
         return {
             'consequence_score': self.consequence_severity.get(
                 variant.get('consequence', 'Unknown'), 3
             ),
-            'allele_frequency': float(variant.get('allele_frequency', 0.0)),
+            'allele_frequency': float(af),
             'quality_score': float(variant.get('quality', 0))
             if variant.get('quality') != '.' else 0,
             'is_coding': int(
@@ -92,7 +103,10 @@ class EnsembleVariantClassifier:
             'MLH1': 0.99, 'MSH2': 1.00, 'CFTR': 1.00, 'HBB': 0.98,
             'DMD': 1.00, 'EGFR': 0.04, 'KRAS': 0.00, 'NRAS': 0.00,
             'AKT1': 0.00, 'ATM': 0.03, 'APC': 0.63, 'CDKN2A': 0.04,
-            'STK11': 1.00, 'ROS1': 0.00, 'PDGFRA': 0.00, 'IDH2': 0.00
+            'STK11': 1.00, 'ROS1': 0.00, 'PDGFRA': 0.00, 'IDH2': 0.00,
+            'PIK3CA': 0.00, 'RET': 0.15, 'ALK': 0.08, 'BRAF': 0.00,
+            'VHL': 0.98, 'HEXA': 1.00, 'PKD1': 0.92, 'FMR1': 0.89,
+            'GBA': 0.45, 'F8': 0.98, 'PAH': 0.99, 'SMN1': 1.00
         }
         return gnomad_pli.get(gene, 0.5)
 
@@ -191,8 +205,8 @@ class EnsembleVariantClassifier:
         rf_acc = accuracy_score(y_test, rf_pred)
 
         cm = confusion_matrix(y_test, rf_pred)
-        sensitivity = cm[1, 1] / (cm[1, 1] + cm[1, 0])
-        specificity = cm[0, 0] / (cm[0, 0] + cm[0, 1])
+        sensitivity = cm[1, 1] / (cm[1, 1] + cm[1, 0]) if (cm[1, 1] + cm[1, 0]) > 0 else 0
+        specificity = cm[0, 0] / (cm[0, 0] + cm[0, 1]) if (cm[0, 0] + cm[0, 1]) > 0 else 0
 
         features_list = ['consequence', 'allele_freq', 'quality', 'coding', 'constraint']
         self.metrics['random_forest'] = {
@@ -244,7 +258,7 @@ class EnsembleVariantClassifier:
         """
         Predict pathogenicity using Random Forest or ensemble averaging.
         """
-        if self.rf_model is None:
+        if not self.is_trained:
             self.train_all_models()
 
         features = self.extract_features(variant)
