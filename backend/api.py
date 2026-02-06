@@ -1,5 +1,5 @@
 ﻿"""
-Flask API for GenoInsight Platform
+Flask API for GenoInsight Platform - Using Ensemble Models
 """
 
 from flask import Flask, request, jsonify
@@ -12,12 +12,10 @@ from werkzeug.utils import secure_filename
 sys.path.insert(0, os.path.dirname(__file__))
 
 from variant_parser import VariantParser
-from ml_classifier import VariantPathogenicityClassifier
+from ensemble_models import EnsembleVariantClassifier
 from clinical_annotator import ClinicalAnnotator
 
 app = Flask(__name__)
-
-# FIX CORS - Allow all origins for ngrok
 CORS(app, resources={r"/*": {"origins": "*"}})
 
 UPLOAD_FOLDER = 'uploads'
@@ -25,7 +23,8 @@ ALLOWED_EXTENSIONS = {'vcf', 'txt'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
-ml_classifier = VariantPathogenicityClassifier()
+# Use ensemble classifier
+ensemble_classifier = EnsembleVariantClassifier()
 clinical_annotator = ClinicalAnnotator()
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -39,7 +38,8 @@ def health_check():
     return jsonify({
         'status': 'healthy',
         'service': 'GenoInsight API',
-        'version': '1.0.0'
+        'version': '2.0.0',
+        'models': ['random_forest', 'logistic_regression', 'xgboost']
     }), 200
 
 
@@ -84,9 +84,10 @@ def analyze_variant():
         return jsonify({'error': 'No variant data provided'}), 400
     
     variant = data['variant']
+    use_ensemble = data.get('use_ensemble', False)
     
     try:
-        ml_prediction = ml_classifier.predict_pathogenicity(variant)
+        ml_prediction = ensemble_classifier.predict_pathogenicity(variant, use_ensemble=use_ensemble)
         annotation = clinical_annotator.annotate_variant(variant, ml_prediction)
         
         return jsonify({
@@ -106,12 +107,13 @@ def analyze_batch():
         return jsonify({'error': 'No variants provided'}), 400
     
     variants = data['variants']
+    use_ensemble = data.get('use_ensemble', False)
     
     try:
         annotations = []
         
         for variant in variants:
-            ml_prediction = ml_classifier.predict_pathogenicity(variant)
+            ml_prediction = ensemble_classifier.predict_pathogenicity(variant, use_ensemble=use_ensemble)
             annotation = clinical_annotator.annotate_variant(variant, ml_prediction)
             annotations.append(annotation)
         
@@ -153,22 +155,30 @@ def get_sample_data():
         {'id': 'chr13:32912299:A>G', 'gene': 'BRCA2', 'consequence': 'missense_variant', 'allele_frequency': 0.0002, 'quality': 52.0}
     ]
     
+    return jsonify({'success': True, 'sample_variants': sample_variants}), 200
+
+
+@app.route('/api/model-info', methods=['GET'])
+def model_info():
+    """Return information about available models"""
     return jsonify({
-        'success': True,
-        'sample_variants': sample_variants
+        'available_models': {
+            'random_forest': 'Primary production model - explainable and robust',
+            'logistic_regression': 'Baseline reference - simple and interpretable',
+            'xgboost': 'Performance benchmark - high accuracy'
+        },
+        'default_model': 'random_forest',
+        'ensemble_mode': 'Averages predictions from all three models',
+        'metrics': ensemble_classifier.metrics
     }), 200
 
 
 if __name__ == '__main__':
-    print("Initializing ML model...")
+    print("Initializing ensemble models...")
     
-    try:
-        ml_classifier.load_model()
-        print("Model loaded!")
-    except:
-        ml_classifier.train_model()
-        ml_classifier.save_model()
-        print("Model trained!")
+    # Train all models on startup
+    ensemble_classifier.train_all_models()
     
-    print("Starting API...")
+    print("\nAll models ready!")
+    print("Starting GenoInsight API v2.0...")
     app.run(debug=True, host='0.0.0.0', port=5000)
