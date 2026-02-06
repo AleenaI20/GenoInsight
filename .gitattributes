@@ -1,4 +1,4 @@
-data/clinvar.vcf.gz filter=lfs diff=lfs merge=lfs -text
 *.vcf filter=lfs diff=lfs merge=lfs -text
 *.vcf.gz filter=lfs diff=lfs merge=lfs -text
 *.vcf.bgz filter=lfs diff=lfs merge=lfs -text
+data/clinvar.vcf.gz filter=lfs diff=lfs merge=lfs -text
