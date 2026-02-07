@@ -62,20 +62,20 @@ Open browser to: `http://localhost:5000`
 ```
 GenoInsight/
 ├── backend/
-│   ├── app.py                      # Main Flask application with API endpoints
+│   ├── app.py                      # Flask application with API endpoints
 │   ├── data/
-│   │   ├── variant_database.py     # ClinVar variant database (20+ real variants)
+│   │   ├── variant_database.py     # ClinVar database (23 real variants)
 │   │   ├── vcf_parser.py           # VCF file parser
 │   │   └── __init__.py
 │   └── models/
-│       ├── ml_models.py            # Random Forest, XGBoost, Logistic Regression
+│       ├── ml_models.py            # ML models (RF, XGBoost, LR)
 │       └── __init__.py
 ├── frontend/
 │   ├── static/
 │   │   └── js/
 │   │       └── app.js              # Dashboard interactivity
 │   └── templates/
-│       └── dashboard.html          # Main user interface
+│       └── dashboard.html          # User interface
 ├── .gitignore
 ├── README.md
 └── requirements.txt
@@ -86,9 +86,9 @@ GenoInsight/
 | Metric | Impact |
 |--------|--------|
 | **Efficiency** | Variant interpretation in seconds vs days |
-| **Equity** | Population-aware analysis across 5+ ancestries (African, European, Asian, Hispanic/Latino, Ashkenazi Jewish) |
+| **Equity** | Population-aware analysis across 5+ ancestries |
 | **Actionability** | Clear treatment plans for 12+ disease categories |
-| **Accessibility** | Non-technical interface designed for stakeholders |
+| **Accessibility** | Non-technical interface for stakeholders |
 
 ## 🧬 Example Use Cases
 
@@ -99,7 +99,7 @@ GenoInsight/
 - Prevention strategies (prophylactic surgery, chemoprevention)
 
 ### Rare Disease Diagnosis
-- Detects variants in genes like GBA (Gaucher Disease), CFTR (Cystic Fibrosis), SMN1 (Spinal Muscular Atrophy)
+- Detects variants in GBA (Gaucher), CFTR (Cystic Fibrosis), SMN1 (SMA)
 - Provides enzyme replacement therapy recommendations
 - Outlines monitoring requirements
 
@@ -112,22 +112,22 @@ GenoInsight/
 
 - **Real Data Integration**: ClinVar database with 23 verified pathogenic variants
 - **Population Diversity**: gnomAD frequency data for equitable healthcare
-- **Reproducible Results**: Deterministic patient profiles for consistent analysis
-- **Variant Coverage**: SNPs, Indels, and Structural Variants (deletions, duplications, repeat expansions)
-- **Disease Coverage**: Cancer predisposition, rare genetic diseases, cardiovascular conditions, neurological disorders, metabolic diseases
+- **Reproducible Results**: Deterministic patient profiles
+- **Variant Coverage**: SNPs, Indels, Structural Variants (deletions, duplications)
+- **Disease Coverage**: Cancer, rare diseases, cardiovascular, neurological, metabolic
 
 ## 👥 Development Team
 
-**Aleena Iraqui** - *Platform Developer*
-- Designed and implemented complete precision medicine platform
+**Aleena Iraqui** - *Lead Developer*
+- Platform architecture and full-stack development
 - Integrated real ClinVar and gnomAD variant databases
-- Built ML models (Random Forest, XGBoost, Logistic Regression) for variant classification
-- Developed VCF file parser for patient data upload
-- Created stakeholder-friendly dashboard interface
-- Implemented disease-specific treatment recommendation system
+- Implemented ML models (Random Forest, XGBoost, Logistic Regression)
+- Developed VCF file parser and upload functionality
+- Created disease-specific treatment recommendation engine
+- Built stakeholder-friendly dashboard interface
 - Designed multi-patient comparison and bulk analysis features
 
-**Nithisha Luther Bastin** - *Quality Assurance & Debugging*
+**Nithisha Luther Bastin** - *Quality Assurance*
 - Testing and debugging support
 
 ## 📄 Project Information
