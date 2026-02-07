@@ -1,65 +1,111 @@
 ﻿import os
-import pandas as pd
 import pickle
-import vcf
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.linear_model import LogisticRegression
-from xgboost import XGBClassifier
+import pandas as pd
+import numpy as np
+import vcfpy
 from flask import Flask, request, jsonify
-from werkzeug.utils import secure_filename
 
+# -------------------------------
+# Paths
+# -------------------------------
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_DIR = os.path.join(BASE_DIR, "../models")
+
+# -------------------------------
+# Load ML models
+# -------------------------------
+try:
+    with open(os.path.join(MODEL_DIR, "rf_model.pkl"), "rb") as f:
+        rf_model = pickle.load(f)
+    with open(os.path.join(MODEL_DIR, "xgb_model.pkl"), "rb") as f:
+        xgb_model = pickle.load(f)
+except Exception as e:
+    raise RuntimeError(f"Error loading models: {e}")
+
+# -------------------------------
+# Initialize Flask
+# -------------------------------
 app = Flask(__name__)
-UPLOAD_FOLDER = 'uploads'
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-clinvar_vcf = 'data/clinvar.vcf.gz'
-gnomad_vcf_files = [f'data/gnomad_chr{i}.vcf.bgz' for i in range(1,23)]
-pharma_genes = ['CYP2D6', 'CYP2C19']
+# -------------------------------
+# Helper: parse VCF to DataFrame
+# -------------------------------
+def vcf_to_dataframe(vcf_path):
+    """
+    Reads a VCF file and converts it to a pandas DataFrame.
+    Extracts basic info (CHROM, POS, REF, ALT, QUAL) and INFO fields.
+    """
+    reader = vcfpy.Reader.from_path(vcf_path)
+    records = []
 
-def extract_features(vcf_path):
-    vcf_reader = vcf.Reader(filename=vcf_path)
-    data = []
-    for record in vcf_reader:
-        data.append({
-            'consequence': len(record.ALT),
-            'allele_freq': record.INFO.get('AF',[0])[0],
-            'is_pharma_gene': int(record.INFO.get('GENE','') in pharma_genes),
-            'quality': record.QUAL,
-            'coding': int('CDS' in record.INFO.get('FUNCTION',''))
-        })
-    return pd.DataFrame(data)
+    for record in reader:
+        rec_dict = {
+            "CHROM": record.CHROM,
+            "POS": record.POS,
+            "REF": record.REF,
+            "ALT": ",".join([str(a) for a in record.ALT]),
+            "QUAL": record.QUAL,
+        }
+        for key, value in record.INFO.items():
+            rec_dict[key] = value
+        records.append(rec_dict)
 
-def train_models():
-    df = extract_features(clinvar_vcf)
-    df['label'] = [1]*len(df)
-    X = df[['consequence','allele_freq','is_pharma_gene','quality','coding']]
-    y = df['label']
+    df = pd.DataFrame(records)
+    return df
 
-    rf = RandomForestClassifier(n_estimators=100, random_state=42)
-    rf.fit(X,y)
-    pickle.dump(rf, open('models/rf_model.pkl','wb'))
+# -------------------------------
+# Helper: feature extraction for ML
+# -------------------------------
+def prepare_features(df):
+    """
+    Convert VCF DataFrame to features expected by your ML models.
+    Adjust according to your trained model features.
+    """
+    df_features = pd.DataFrame()
+    df_features["REF_len"] = df["REF"].apply(len)
+    df_features["ALT_len"] = df["ALT"].apply(lambda x: max([len(a) for a in x.split(",")]))
+    df_features["QUAL"] = df["QUAL"].fillna(0)
+    return df_features
 
-    lr = LogisticRegression()
-    lr.fit(X,y)
-    pickle.dump(lr, open('models/lr_model.pkl','wb'))
+# -------------------------------
+# Flask routes
+# -------------------------------
+@app.route("/")
+def index():
+    return "GenoInsight API is running. Use POST /predict with VCF file."
 
-    xgb = XGBClassifier(use_label_encoder=False, eval_metric='logloss')
-    xgb.fit(X,y)
-    pickle.dump(xgb, open('models/xgb_model.pkl','wb'))
+@app.route("/predict", methods=["POST"])
+def predict():
+    if "vcf" not in request.files:
+        return jsonify({"error": "No VCF file provided"}), 400
+    
+    vcf_file = request.files["vcf"]
+    vcf_path = os.path.join(BASE_DIR, "temp.vcf")
+    vcf_file.save(vcf_path)
+    
+    try:
+        df_vcf = vcf_to_dataframe(vcf_path)
+        features = prepare_features(df_vcf)
+        
+        # Predictions
+        rf_preds = rf_model.predict(features)
+        xgb_preds = xgb_model.predict(features)
+        
+        # Combine predictions with original variants
+        df_vcf["RF_Pred"] = rf_preds
+        df_vcf["XGB_Pred"] = xgb_preds
 
-train_models()
+        results = df_vcf.to_dict(orient="records")
+        return jsonify({"predictions": results})
 
-@app.route('/upload', methods=['POST'])
-def upload_vcf():
-    file = request.files['file']
-    filename = secure_filename(file.filename)
-    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-    file.save(filepath)
-    df = extract_features(filepath)
-    rf = pickle.load(open('models/rf_model.pkl','rb'))
-    df['rf_pred'] = rf.predict(df[['consequence','allele_freq','is_pharma_gene','quality','coding']])
-    return df.to_json(orient='records')
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        if os.path.exists(vcf_path):
+            os.remove(vcf_path)
 
-if __name__ == '__main__':
-    app.run(debug=True)
+# -------------------------------
+# Run Flask
+# -------------------------------
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)

@@ -8,12 +8,14 @@
 <h1>GenoInsight Precision Medicine Dashboard</h1>
 <input type='file' id='vcfFile' />
 <button onclick='uploadVCF()'>Upload VCF</button>
-<div id='results'></div>
+<div id='results' style="white-space: pre-wrap; margin-top:20px;"></div>
 
 <script>
 function uploadVCF(){
     let fileInput = document.getElementById('vcfFile');
     let file = fileInput.files[0];
+    if(!file){ alert("Please select a VCF file"); return; }
+
     let formData = new FormData();
     formData.append('file', file);
 
