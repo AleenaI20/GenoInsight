@@ -1,111 +1,68 @@
 ﻿import os
 import pickle
 import pandas as pd
-import numpy as np
 import vcfpy
 from flask import Flask, request, jsonify
 
-# -------------------------------
-# Paths
-# -------------------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_DIR = os.path.join(BASE_DIR, "../models")
 
-# -------------------------------
-# Load ML models
-# -------------------------------
-try:
-    with open(os.path.join(MODEL_DIR, "rf_model.pkl"), "rb") as f:
-        rf_model = pickle.load(f)
-    with open(os.path.join(MODEL_DIR, "xgb_model.pkl"), "rb") as f:
-        xgb_model = pickle.load(f)
-except Exception as e:
-    raise RuntimeError(f"Error loading models: {e}")
+with open(os.path.join(MODEL_DIR, "rf_model.pkl"), "rb") as f:
+    rf_model = pickle.load(f)
 
-# -------------------------------
-# Initialize Flask
-# -------------------------------
+with open(os.path.join(MODEL_DIR, "lr_model.pkl"), "rb") as f:
+    lr_model = pickle.load(f)
+
+with open(os.path.join(MODEL_DIR, "xgb_model.pkl"), "rb") as f:
+    xgb_model = pickle.load(f)
+
 app = Flask(__name__)
 
-# -------------------------------
-# Helper: parse VCF to DataFrame
-# -------------------------------
-def vcf_to_dataframe(vcf_path):
-    """
-    Reads a VCF file and converts it to a pandas DataFrame.
-    Extracts basic info (CHROM, POS, REF, ALT, QUAL) and INFO fields.
-    """
+def vcf_to_df(vcf_path):
     reader = vcfpy.Reader.from_path(vcf_path)
-    records = []
+    rows = []
 
-    for record in reader:
-        rec_dict = {
-            "CHROM": record.CHROM,
-            "POS": record.POS,
-            "REF": record.REF,
-            "ALT": ",".join([str(a) for a in record.ALT]),
-            "QUAL": record.QUAL,
-        }
-        for key, value in record.INFO.items():
-            rec_dict[key] = value
-        records.append(rec_dict)
+    for rec in reader:
+        info = rec.INFO
+        rows.append({
+            "REF_len": len(rec.REF),
+            "ALT_len": max(len(str(a)) for a in rec.ALT),
+            "QUAL": rec.QUAL or 0,
+            "AF_EUR": info.get("AF_EUR", 0),
+            "AF_AFR": info.get("AF_AFR", 0),
+            "AF_EAS": info.get("AF_EAS", 0),
+            "CHROM": rec.CHROM,
+            "POS": rec.POS,
+            "REF": rec.REF,
+            "ALT": ",".join(map(str, rec.ALT))
+        })
 
-    df = pd.DataFrame(records)
-    return df
+    return pd.DataFrame(rows)
 
-# -------------------------------
-# Helper: feature extraction for ML
-# -------------------------------
-def prepare_features(df):
-    """
-    Convert VCF DataFrame to features expected by your ML models.
-    Adjust according to your trained model features.
-    """
-    df_features = pd.DataFrame()
-    df_features["REF_len"] = df["REF"].apply(len)
-    df_features["ALT_len"] = df["ALT"].apply(lambda x: max([len(a) for a in x.split(",")]))
-    df_features["QUAL"] = df["QUAL"].fillna(0)
-    return df_features
-
-# -------------------------------
-# Flask routes
-# -------------------------------
 @app.route("/")
 def index():
-    return "GenoInsight API is running. Use POST /predict with VCF file."
+    return "GenoInsight API running"
 
 @app.route("/predict", methods=["POST"])
 def predict():
     if "vcf" not in request.files:
-        return jsonify({"error": "No VCF file provided"}), 400
-    
-    vcf_file = request.files["vcf"]
-    vcf_path = os.path.join(BASE_DIR, "temp.vcf")
-    vcf_file.save(vcf_path)
-    
+        return jsonify({"error": "VCF file required"}), 400
+
+    path = os.path.join(BASE_DIR, "temp.vcf")
+    request.files["vcf"].save(path)
+
     try:
-        df_vcf = vcf_to_dataframe(vcf_path)
-        features = prepare_features(df_vcf)
-        
-        # Predictions
-        rf_preds = rf_model.predict(features)
-        xgb_preds = xgb_model.predict(features)
-        
-        # Combine predictions with original variants
-        df_vcf["RF_Pred"] = rf_preds
-        df_vcf["XGB_Pred"] = xgb_preds
+        df = vcf_to_df(path)
+        X = df[["REF_len","ALT_len","QUAL","AF_EUR","AF_AFR","AF_EAS"]]
 
-        results = df_vcf.to_dict(orient="records")
-        return jsonify({"predictions": results})
+        df["RF_Pathogenic"] = rf_model.predict(X)
+        df["LR_Pathogenic"] = lr_model.predict(X)
+        df["XGB_Pathogenic"] = xgb_model.predict(X)
 
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify(df.to_dict(orient="records"))
+
     finally:
-        if os.path.exists(vcf_path):
-            os.remove(vcf_path)
+        os.remove(path)
 
-# -------------------------------
-# Run Flask
-# -------------------------------
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000)
