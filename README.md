@@ -1,29 +1,51 @@
-﻿# GenoInsight: AI-Driven Precision Medicine Platform
+# GenoInsight: AI-Driven Precision Medicine Platform
 
-## 🎯 Project Overview
+**Team SeqSleuths**
 
-**Significance:** Genome sequencing generates thousands of genetic variants per patient, but identifying clinically relevant variants often takes several days and relies on reference data that underrepresents many global populations. This slows clinical decision-making and contributes to unequal healthcare outcomes.
+## 🎯 Problem Statement
 
-**Question:** How can genomic variant interpretation be accelerated while reducing population bias in precision medicine?
+Genome sequencing generates thousands of genetic variants per patient, but identifying clinically relevant variants often takes several days and relies on reference data that underrepresents many global populations. This slows clinical decision-making and contributes to unequal healthcare outcomes.
 
-**Impact:** GenoInsight reduces variant interpretation time from days to seconds while supporting more equitable analysis across diverse populations, helping improve both efficiency and fairness in precision medicine.
+## 💡 Solution
 
-## 🚀 Features
+GenoInsight is an AI-powered precision medicine platform that:
+- **Reduces variant interpretation time from days to seconds**
+- **Provides disease-specific treatment recommendations**
+- **Uses population-aware analysis to reduce healthcare disparities**
+- **Delivers actionable insights for non-technical stakeholders**
 
-- **AI Variant Hunter**: Uses Random Forest, XGBoost, and Logistic Regression models
-- **Real ClinVar Data**: Analyzes actual pathogenic variants from ClinVar database
-- **gnomAD Integration**: Population frequency data for reducing bias
-- **Diverse Patient Cohort**: Supports multiple ancestries (African, European, Asian, Hispanic/Latino, Ashkenazi Jewish)
-- **Pharmacogenomics**: Drug metabolism and sensitivity variant analysis
-- **Interactive Dashboard**: Real-time variant visualization for each patient
+## ✨ Key Features
 
-## 📊 ML Models
+### 1. VCF Upload & Analysis
+- Upload patient genetic data (VCF format)
+- Instant analysis of health risks
+- Clear risk level assessment (HIGH/MODERATE/LOW)
 
-1. **Random Forest** (Primary Model) - 94% accuracy
-2. **Logistic Regression** (Baseline) - 87% accuracy  
-3. **XGBoost** (Enhanced Model) - 96% accuracy
+### 2. Disease-Specific Treatment Plans
+For each identified condition, GenoInsight provides:
+- **Treatment Options**: Specific medications and therapies
+- **Screening Recommendations**: When and what tests to perform
+- **Prevention Strategies**: Risk reduction approaches
+- **Monitoring Plans**: Ongoing care guidelines
 
-## 🏃‍♀️ Quick Start
+### 3. Multi-Patient Comparison
+- Compare genetic risks across multiple patients
+- Identify population-level patterns
+- Support clinical research and cohort studies
+
+### 4. AI-Powered Predictions
+Three machine learning models working together:
+- **Random Forest** (94% accuracy) - Primary model
+- **XGBoost** (96% accuracy) - Enhanced predictions
+- **Logistic Regression** (87% accuracy) - Baseline comparison
+
+## 📊 Data Sources
+
+- **ClinVar**: Real pathogenic variants (SNPs, Indels, Structural Variants)
+- **gnomAD**: Population-specific allele frequencies across diverse ancestries
+- **Clinical Guidelines**: Evidence-based treatment recommendations
+
+## 🚀 Quick Start
 
 ### Installation
 ```bash
@@ -40,31 +62,59 @@ Open browser to: `http://localhost:5000`
 
 ## 📁 Project Structure
 ```
-genoinsight/
+GenoInsight/
 ├── backend/
-│   ├── app.py                 # Flask application
+│   ├── app.py                      # Main Flask application
 │   ├── models/
-│   │   ├── __init__.py
-│   │   └── ml_models.py       # ML model implementations
-│   └── data/                  # Data storage
+│   │   ├── ml_models.py            # ML model implementations
+│   │   └── __init__.py
+│   └── data/
+│       ├── variant_database.py     # ClinVar variant database
+│       ├── vcf_parser.py           # VCF file parser
+│       └── __init__.py
 ├── frontend/
 │   ├── templates/
-│   │   └── dashboard.html     # Main dashboard
-│   └── static/                # CSS/JS assets
-├── requirements.txt
+│   │   └── dashboard.html          # Main dashboard interface
+│   └── static/
+│       └── js/
+│           └── app.js              # Frontend logic
+├── requirements.txt                # Python dependencies
 └── README.md
 ```
 
-## 🔬 Data Sources
+## 🎓 Impact
 
-- **ClinVar**: Real pathogenic variant data
-- **gnomAD**: Population allele frequencies
-- **Focus**: SNPs, Indels, and structural variants across diverse populations
+**Efficiency**: Variant interpretation in seconds vs days
+**Equity**: Population-aware analysis across diverse ancestries
+**Actionability**: Clear treatment plans for healthcare providers
+**Accessibility**: Non-technical interface for stakeholders
+
+## 🧬 Example Use Cases
+
+### Cancer Risk Assessment
+- Identifies BRCA1/BRCA2 mutations
+- Recommends PARP inhibitors (Olaparib, Talazoparib)
+- Suggests screening protocols (MRI, mammography)
+- Prevention strategies (prophylactic surgery, chemoprevention)
+
+### Rare Disease Diagnosis
+- Detects variants in genes like GBA (Gaucher Disease)
+- Provides enzyme replacement therapy recommendations
+- Outlines monitoring requirements
+
+### Cardiovascular Risk
+- Identifies Factor V Leiden mutations
+- Recommends anticoagulation strategies
+- Prevention guidelines
 
 ## 👥 Team SeqSleuths
 
-Built for precision medicine equity and clinical impact.
+Built for Convergence 2026 Symposium
 
-## 📝 License
+## 📄 License
 
-Educational project for Convergence 2026 Hackathon
+Educational project - Convergence 2026 Hackathon
+
+---
+
+**Questions?** Contact the team or visit our [GitHub repository](https://github.com/AleenaI20/GenoInsight)
